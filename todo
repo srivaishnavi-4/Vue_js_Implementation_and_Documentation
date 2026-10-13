@@ -1,0 +1,37 @@
+Hi All, Please focus on the following topics. This week you will need have to complete the following
+Vue.JS 
+
+1. Architecture & Component Design
+
+Single File Components (SFCs): Structuring <script setup>, <template>, and <style scoped> within .vue files.
+Component Communication: Mastering parent-to-child data flow via props and child-to-parent notifications via emit.
+Slots System: Implementing flexible layouts using default, named, and scoped slots for passing template content.
+Provide / Inject: Passing dependency data deeply down a component tree without manually passing props through every layer.
+
+⚡ 2. Advanced Reactivity (Composition API)
+
+Ref vs. Reactive: Knowing when to use ref() (for primitives and deep object tracking) versus reactive() (exclusively for objects and reactive state constraints).
+Computed & Watchers: Optimizing performance with cached computed() properties, and handling side effects via watch() and watchEffect().
+Custom Composables: Extracting and sharing stateful logic across multiple components using standard naming conventions (e.g., useFetch).
+Shallow Reactivity: Utilizing shallowRef() and shallowReactive() to optimize performance for large, immutable datasets.
+
+🛠️ 3. Built-in Components & Templates
+
+Dynamic Components: Swapping active UI layers dynamically on a page using the <component :is="..."> element.
+KeepAlive: Caching component instances dynamically when switching between views to preserve user input or scroll state.
+Teleport: Rendering a component's template node into a different part of the DOM tree (useful for modals, tooltips, and notifications).
+Suspense: Managing loading states and fallback content for components wrapping asynchronous dependencies.
+
+🚀 4. Ecosystem & Routing
+
+Vue Router: Configuring client-side routing, nested routes, dynamic route matching, and programmatic navigation.
+Navigation Guards: Securing specific application views using global, per-route, or in-component authentication checks.
+Pinia State Management: Managing global, centralized application states with modular stores, actions, and getters.
+Server-Side Rendering (SSR): Introducing frameworks like Nuxt.js to build SEO-friendly applications with hybrid rendering capabilities.
+
+🔧 5. Tooling, Testing & Production
+
+Vite Toolchain: Configuring the local build pipeline, environment variables, aliases, and asset optimization.
+Testing: Writing isolated unit tests via Vitest / Vue Test Utils, and end-to-end integration tests using Cypress or Playwright.
+TypeScript Integration: Implementing strict type safety for component properties, event payloads, and global state objects.
+Performance Optimization: Leveraging lazy loading routes, component async chunks, and analyzing build footprints using visualizers.
