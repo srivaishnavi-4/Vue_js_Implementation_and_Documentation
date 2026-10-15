@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue KeepAlive POC</title>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            background: #f3f5fa;
+            font-family: Arial, sans-serif;
+            color: #20283a;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        h1 {
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #687386;
+            line-height: 1.6;
+        }
+
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 25px 0 20px;
+        }
+
+        button {
+            padding: 12px 17px;
+            border: 0;
+            border-radius: 7px;
+            background: #e1e6f0;
+            color: #26324c;
+            cursor: pointer;
+        }
+
+        button.active,
+        button.primary {
+            background: #4055d6;
+            color: white;
+        }
+
+        .panel {
+            min-height: 300px;
+            padding: 25px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px #0000000a;
+        }
+
+        .field {
+            margin: 18px 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input:not([type="checkbox"]),
+        textarea,
+        select {
+            display: block;
+            width: 100%;
+            max-width: 500px;
+            padding: 12px;
+            border: 1px solid #d5dbea;
+            border-radius: 7px;
+            font: inherit;
+        }
+
+        textarea {
+            min-height: 80px;
+        }
+
+        .card {
+            margin-top: 18px;
+            padding: 15px;
+            background: #f1f3ff;
+            border-radius: 8px;
+            line-height: 1.8;
+            overflow-wrap: anywhere;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e5f8ec;
+            color: #17683f;
+            border-radius: 8px;
+        }
+
+        .muted {
+            color: #687386;
+        }
+
+        .comparison {
+            margin-top: 25px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div id="app" class="container">
+
+    <h1>Employee Portal</h1>
+    <p class="subtitle">
+        Vue 3 Dynamic Components and KeepAlive demonstration.
+    </p>
+
+    <div class="tabs">
+        <button
+            v-for="tab in tabs"
+            :key="tab"
+            :class="{ active: activeTab === tab }"
+            @click="activeTab = tab"
+        >
+            {{ tab }}
+        </button>
+    </div>
+
+    <div class="panel">
+
+        <!-- KeepAlive caches the selected component -->
+        <KeepAlive v-if="keepAliveEnabled">
+            <component :is="activeComponent" />
+        </KeepAlive>
+
+        <!-- Without KeepAlive, inactive components are unmounted -->
+        <component
+            v-else
+            :is="activeComponent"
+        />
+
+    </div>
+
+    <div class="status">
+        <strong>Current view:</strong> {{ activeTab }}
+        <br>
+        <strong>KeepAlive:</strong>
+        {{ keepAliveEnabled ? "Enabled" : "Disabled" }}
+    </div>
+
+    <div class="comparison">
+        <h2>Test the difference</h2>
+
+        <p class="muted">
+            Enter data in Profile, switch tabs, and return.
+            Then disable KeepAlive and repeat.
+        </p>
+
+        <button
+            class="primary"
+            @click="keepAliveEnabled = !keepAliveEnabled"
+        >
+            Turn KeepAlive {{ keepAliveEnabled ? "OFF" : "ON" }}
+        </button>
+    </div>
+
+</div>
+
+<script>
+const {
+    createApp,
+    ref,
+    computed,
+    defineComponent,
+    onMounted,
+    onActivated,
+    onDeactivated,
+    onUnmounted
+} = Vue;
+
+
+// COMPONENT 1: PROFILE
+
+const Profile = defineComponent({
+    name: "Profile",
+
+    setup() {
+        const name = ref("");
+        const email = ref("");
+        const notes = ref("");
+
+        onMounted(() => {
+            console.log("Profile mounted");
+        });
+
+        onActivated(() => {
+            console.log("Profile activated");
+        });
+
+        onDeactivated(() => {
+            console.log("Profile deactivated");
+        });
+
+        onUnmounted(() => {
+            console.log("Profile unmounted");
+        });
+
+        return {
+            name,
+            email,
+            notes
+        };
+    },
+
+    template: `
+        <section>
+            <h2>Employee Profile</h2>
+            <p class="muted">
+                Enter details, then switch to another tab.
+            </p>
+
+            <div class="field">
+                <label>Employee name</label>
+                <input
+                    v-model="name"
+                    placeholder="Enter employee name"
+                >
+            </div>
+
+            <div class="field">
+                <label>Email address</label>
+                <input
+                    v-model="email"
+                    type="email"
+                    placeholder="Enter email"
+                >
+            </div>
+
+            <div class="field">
+                <label>Notes</label>
+                <textarea
+                    v-model="notes"
+                    placeholder="Enter notes"
+                ></textarea>
+            </div>
+
+            <div class="card">
+                <strong>Live preview</strong>
+                <div>Name: {{ name || "Not entered" }}</div>
+                <div>Email: {{ email || "Not entered" }}</div>
+                <div>Notes: {{ notes || "No notes" }}</div>
+            </div>
+        </section>
+    `
+});
+
+
+// COMPONENT 2: ANALYTICS
+
+const Analytics = defineComponent({
+    name: "Analytics",
+
+    setup() {
+        const clicks = ref(0);
+
+        function recordClick() {
+            clicks.value++;
+        }
+
+        return {
+            clicks,
+            recordClick
+        };
+    },
+
+    template: `
+        <section>
+            <h2>Analytics</h2>
+            <p>Test whether this component's state is preserved.</p>
+
+            <div class="card">
+                Button clicks: <strong>{{ clicks }}</strong>
+            </div>
+
+            <button class="primary" @click="recordClick">
+                Record interaction
+            </button>
+        </section>
+    `
+});
+
+
+// COMPONENT 3: SETTINGS
+
+const Settings = defineComponent({
+    name: "Settings",
+
+    setup() {
+        const theme = ref("Light");
+        const notifications = ref(true);
+
+        return {
+            theme,
+            notifications
+        };
+    },
+
+    template: `
+        <section>
+            <h2>Settings</h2>
+
+            <div class="field">
+                <label>Theme</label>
+                <select v-model="theme">
+                    <option>Light</option>
+                    <option>Dark</option>
+                    <option>System</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>
+                    <input
+                        type="checkbox"
+                        v-model="notifications"
+                    >
+                    Enable notifications
+                </label>
+            </div>
+
+            <div class="card">
+                Theme: {{ theme }}
+                <br>
+                Notifications:
+                {{ notifications ? "Enabled" : "Disabled" }}
+            </div>
+        </section>
+    `
+});
+
+
+// ROOT APPLICATION
+
+createApp({
+    setup() {
+        const activeTab = ref("Profile");
+        const keepAliveEnabled = ref(true);
+
+        const tabs = [
+            "Profile",
+            "Analytics",
+            "Settings"
+        ];
+
+        const componentMap = {
+            Profile,
+            Analytics,
+            Settings
+        };
+
+        const activeComponent = computed(() => {
+            return componentMap[activeTab.value];
+        });
+
+        return {
+            activeTab,
+            tabs,
+            activeComponent,
+            keepAliveEnabled
+        };
+    }
+}).mount("#app");
+</script>
+
+</body>
+</html>

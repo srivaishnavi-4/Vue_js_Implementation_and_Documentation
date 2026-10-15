@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue Custom Composables - Real-Time Cart</title>
+
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+
+    button {
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .app {
+      max-width: 1200px;
+      margin: auto;
+      padding: 24px;
+    }
+
+    .header {
+      padding: 26px;
+      border-radius: 14px;
+      background: #1e3556;
+      color: white;
+      margin-bottom: 22px;
+    }
+
+    .header h1 {
+      margin-top: 0;
+    }
+
+    .header p {
+      line-height: 1.6;
+      color: #dbeafe;
+    }
+
+    .cart-badge {
+      display: inline-block;
+      padding: 9px 14px;
+      background: #d1fae5;
+      color: #065f46;
+      border-radius: 20px;
+      font-weight: bold;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #dbe3ef;
+      margin-bottom: 20px;
+      min-width: 0;
+    }
+
+    .panel h2 {
+      margin-top: 0;
+    }
+
+    .subtitle {
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .products {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .product {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 15px;
+    }
+
+    .product-icon {
+      height: 80px;
+      display: grid;
+      place-items: center;
+      background: #eff6ff;
+      border-radius: 8px;
+      font-size: 38px;
+    }
+
+    .product h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .price {
+      font-size: 19px;
+      font-weight: bold;
+      color: #047857;
+      margin: 12px 0;
+    }
+
+    .primary-btn {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 7px;
+      background: #2563eb;
+      color: white;
+    }
+
+    .primary-btn:hover {
+      background: #1d4ed8;
+    }
+
+    .cart-item {
+      padding: 15px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .item-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .item-name {
+      font-weight: bold;
+    }
+
+    .item-price {
+      color: #047857;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .quantity-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .quantity-controls button {
+      border: none;
+      background: #e2e8f0;
+      border-radius: 6px;
+      padding: 6px 11px;
+    }
+
+    .remove-btn {
+      margin-left: auto;
+      color: #dc2626;
+      background: #fee2e2 !important;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0;
+    }
+
+    .discount {
+      color: #059669;
+    }
+
+    .grand-total {
+      margin-top: 10px;
+      padding: 16px;
+      background: #d1fae5;
+      color: #065f46;
+      border-radius: 9px;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .grand-total .summary-row {
+      padding: 0;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 25px 10px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    .checkout-btn {
+      width: 100%;
+      padding: 13px;
+      margin-top: 15px;
+      border: none;
+      border-radius: 7px;
+      background: #059669;
+      color: white;
+      font-weight: bold;
+    }
+
+    .checkout-btn:hover {
+      background: #047857;
+    }
+
+    .message {
+      margin-top: 12px;
+      padding: 12px;
+      background: #d1fae5;
+      color: #065f46;
+      border-radius: 7px;
+      line-height: 1.5;
+    }
+
+    .activity {
+      margin-top: 22px;
+      padding: 20px;
+      background: #e0f2fe;
+      border-radius: 12px;
+      line-height: 1.7;
+    }
+
+    .activity h2 {
+      margin-top: 0;
+    }
+
+    @media (max-width: 800px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 450px) {
+      .app {
+        padding: 12px;
+      }
+
+      .products {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="app" class="app">
+
+  <!-- HEADER COMPONENT -->
+  <cart-header></cart-header>
+
+  <div class="layout">
+
+    <!-- COMPONENT 1: PRODUCT STORE -->
+    <product-store></product-store>
+
+    <div>
+
+      <!-- COMPONENT 2: SHOPPING CART -->
+      <shopping-cart></shopping-cart>
+
+      <!-- COMPONENT 3: CHECKOUT SUMMARY -->
+      <checkout-summary></checkout-summary>
+
+    </div>
+
+  </div>
+
+  <section class="activity">
+    <h2>What is happening in real time?</h2>
+
+    <p>
+      <strong>Product Store:</strong>
+      Adds products to the shared cart state.
+    </p>
+
+    <p>
+      <strong>Shopping Cart:</strong>
+      Updates quantities and removes products.
+    </p>
+
+    <p>
+      <strong>Checkout Summary:</strong>
+      Calculates subtotal, discount, and final total.
+    </p>
+
+    <p>
+      All three components call the same
+      <code>useCart()</code> composable and access
+      the same reactive cart state.
+    </p>
+  </section>
+
+</div>
+
+<script>
+const {
+  createApp,
+  ref,
+  computed
+} = Vue
+
+// =============================================
+// PRODUCT DATA
+// =============================================
+
+const availableProducts = [
+  {
+    id: 1,
+    name: 'Wireless Headphones',
+    price: 2500,
+    icon: '🎧'
+  },
+  {
+    id: 2,
+    name: 'Mechanical Keyboard',
+    price: 3500,
+    icon: '⌨️'
+  },
+  {
+    id: 3,
+    name: 'Smart Watch',
+    price: 5000,
+    icon: '⌚'
+  },
+  {
+    id: 4,
+    name: 'Wireless Mouse',
+    price: 1200,
+    icon: '🖱️'
+  }
+]
+
+// =============================================
+// SHARED REACTIVE STATE
+// =============================================
+
+// These refs are declared outside useCart().
+// Therefore, every invocation of useCart()
+// accesses the same cart state.
+
+const cartItems = ref([])
+const checkoutMessage = ref('')
+
+// =============================================
+// CUSTOM COMPOSABLE: useCart()
+// =============================================
+
+function useCart() {
+
+  // Derived state
+  const cartCount = computed(() => {
+    return cartItems.value.reduce(
+      (count, item) => count + item.quantity,
+      0
+    )
+  })
+
+  const subtotal = computed(() => {
+    return cartItems.value.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    )
+  })
+
+  // Apply 10% discount for a subtotal of ₹5000 or more.
+  const discount = computed(() => {
+    return subtotal.value >= 5000
+      ? subtotal.value * 0.10
+      : 0
+  })
+
+  const total = computed(() => {
+    return subtotal.value - discount.value
+  })
+
+  // Add a product or increase its quantity.
+  function addToCart(product) {
+    const existingItem = cartItems.value.find(
+      item => item.id === product.id
+    )
+
+    if (existingItem) {
+      existingItem.quantity++
+    } else {
+      cartItems.value.push({
+        ...product,
+        quantity: 1
+      })
+    }
+
+    checkoutMessage.value = ''
+  }
+
+  // Increase an item's quantity.
+  function increaseQuantity(id) {
+    const item = cartItems.value.find(
+      item => item.id === id
+    )
+
+    if (item) {
+      item.quantity++
+      checkoutMessage.value = ''
+    }
+  }
+
+  // Decrease an item's quantity.
+  function decreaseQuantity(id) {
+    const item = cartItems.value.find(
+      item => item.id === id
+    )
+
+    if (item && item.quantity > 1) {
+      item.quantity--
+      checkoutMessage.value = ''
+    }
+  }
+
+  // Remove an item from the cart.
+  function removeFromCart(id) {
+    cartItems.value = cartItems.value.filter(
+      item => item.id !== id
+    )
+
+    checkoutMessage.value = ''
+  }
+
+  // Simulate checkout without processing a real payment.
+  function checkout() {
+    if (cartItems.value.length === 0) {
+      return
+    }
+
+    checkoutMessage.value =
+      `Demo checkout successful! Total: ₹${total.value.toFixed(2)}`
+
+    console.log('Checkout summary:', {
+      items: cartItems.value.map(item => ({
+        name: item.name,
+        quantity: item.quantity
+      })),
+      subtotal: subtotal.value,
+      discount: discount.value,
+      total: total.value
+    })
+
+    // Reset shared cart state.
+    cartItems.value = []
+  }
+
+  // Expose state and actions to components.
+  return {
+    cartItems,
+    cartCount,
+    subtotal,
+    discount,
+    total,
+    checkoutMessage,
+    addToCart,
+    increaseQuantity,
+    decreaseQuantity,
+    removeFromCart,
+    checkout
+  }
+}
+
+// =============================================
+// COMPONENT 1: CART HEADER
+// =============================================
+
+const CartHeader = {
+  setup() {
+    const { cartCount } = useCart()
+
+    return { cartCount }
+  },
+
+  template: `
+    <header class="header">
+      <h1>Real-Time Shopping Cart</h1>
+
+      <p>
+        Vue 3 Custom Composables:
+        Sharing reactive state across components.
+      </p>
+
+      <div class="cart-badge">
+        🛒 Cart Items: {{ cartCount }}
+      </div>
+    </header>
+  `
+}
+
+// =============================================
+// COMPONENT 2: PRODUCT STORE
+// =============================================
+
+const ProductStore = {
+  setup() {
+    const { addToCart } = useCart()
+
+    return {
+      products: availableProducts,
+      addToCart
+    }
+  },
+
+  template: `
+    <section class="panel">
+      <h2>1. Product Store</h2>
+
+      <p class="subtitle">
+        Add products and observe the other components.
+      </p>
+
+      <div class="products">
+
+        <article
+          v-for="product in products"
+          :key="product.id"
+          class="product"
+        >
+          <div class="product-icon">
+            {{ product.icon }}
+          </div>
+
+          <h3>{{ product.name }}</h3>
+
+          <div class="price">
+            ₹{{ product.price.toLocaleString('en-IN') }}
+          </div>
+
+          <button
+            class="primary-btn"
+            @click="addToCart(product)"
+          >
+            Add to Cart
+          </button>
+        </article>
+
+      </div>
+    </section>
+  `
+}
+
+// =============================================
+// COMPONENT 3: SHOPPING CART
+// =============================================
+
+const ShoppingCart = {
+  setup() {
+    const {
+      cartItems,
+      increaseQuantity,
+      decreaseQuantity,
+      removeFromCart
+    } = useCart()
+
+    return {
+      cartItems,
+      increaseQuantity,
+      decreaseQuantity,
+      removeFromCart
+    }
+  },
+
+  template: `
+    <section class="panel">
+      <h2>2. Shopping Cart</h2>
+
+      <p class="subtitle">
+        Change quantities or remove products.
+      </p>
+
+      <div v-if="cartItems.length === 0" class="empty">
+        Your cart is empty.
+        <br>
+        Add products from the store.
+      </div>
+
+      <article
+        v-for="item in cartItems"
+        :key="item.id"
+        class="cart-item"
+      >
+        <div class="item-top">
+          <span class="item-name">
+            {{ item.icon }} {{ item.name }}
+          </span>
+
+          <span class="item-price">
+            ₹{{ (item.price * item.quantity).toLocaleString('en-IN') }}
+          </span>
+        </div>
+
+        <div class="quantity-controls">
+          <button
+            @click="decreaseQuantity(item.id)"
+            :disabled="item.quantity <= 1"
+          >
+            −
+          </button>
+
+          <strong>{{ item.quantity }}</strong>
+
+          <button @click="increaseQuantity(item.id)">
+            +
+          </button>
+
+          <button
+            class="remove-btn"
+            @click="removeFromCart(item.id)"
+          >
+            Remove
+          </button>
+        </div>
+      </article>
+    </section>
+  `
+}
+
+// =============================================
+// COMPONENT 4: CHECKOUT SUMMARY
+// =============================================
+
+const CheckoutSummary = {
+  setup() {
+    const {
+      cartItems,
+      cartCount,
+      subtotal,
+      discount,
+      total,
+      checkoutMessage,
+      checkout
+    } = useCart()
+
+    return {
+      cartItems,
+      cartCount,
+      subtotal,
+      discount,
+      total,
+      checkoutMessage,
+      checkout
+    }
+  },
+
+  template: `
+    <section class="panel">
+      <h2>3. Checkout Summary</h2>
+
+      <div class="summary-row">
+        <span>Total Items</span>
+        <strong>{{ cartCount }}</strong>
+      </div>
+
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <strong>
+          ₹{{ subtotal.toLocaleString('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }) }}
+        </strong>
+      </div>
+
+      <div class="summary-row discount">
+        <span>Discount (10%)</span>
+        <strong>
+          − ₹{{ discount.toLocaleString('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }) }}
+        </strong>
+      </div>
+
+      <div class="grand-total">
+        <div class="summary-row">
+          <span>Final Total</span>
+          <span>
+            ₹{{ total.toLocaleString('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            }) }}
+          </span>
+        </div>
+      </div>
+
+      <p class="subtitle" v-if="subtotal >= 5000">
+        You saved ₹{{ discount.toFixed(2) }}!
+      </p>
+
+      <p class="subtitle" v-else>
+        Spend ₹5,000 or more to receive a 10% discount.
+      </p>
+
+      <button
+        class="checkout-btn"
+        :disabled="cartItems.length === 0"
+        @click="checkout"
+      >
+        Place Demo Order
+      </button>
+
+      <div
+        v-if="checkoutMessage"
+        class="message"
+      >
+        {{ checkoutMessage }}
+      </div>
+    </section>
+  `
+}
+
+// =============================================
+// CREATE VUE APPLICATION
+// =============================================
+
+createApp({
+  components: {
+    CartHeader,
+    ProductStore,
+    ShoppingCart,
+    CheckoutSummary
+  }
+}).mount('#app')
+</script>
+
+</body>
+</html>

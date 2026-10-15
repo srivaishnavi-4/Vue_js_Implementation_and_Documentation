@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Stock Dashboard - Vue 3</title>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 25px;
+            background: #f3f5f9;
+            font-family: Arial, sans-serif;
+            color: #20283a;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 27px;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin: 0;
+        }
+
+        .live {
+            color: #087b50;
+            background: #d9f8e9;
+            padding: 9px 13px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 22px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 3px 12px #00000008;
+        }
+
+        .card p {
+            color: #737b8c;
+            margin: 0 0 10px;
+            font-size: 14px;
+        }
+
+        .card h2 {
+            margin: 0;
+            font-size: 25px;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        input {
+            padding: 11px 13px;
+            border: 1px solid #dce1e9;
+            border-radius: 7px;
+            font-size: 14px;
+            width: 260px;
+            max-width: 100%;
+        }
+
+        button {
+            padding: 11px 15px;
+            border: none;
+            border-radius: 7px;
+            background: #354edb;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .table-card {
+            overflow: hidden;
+            padding: 0;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 15px 18px;
+            border-bottom: 1px solid #edf0f5;
+            white-space: nowrap;
+        }
+
+        th {
+            color: #6c7484;
+            background: #fafbfc;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        td {
+            font-size: 14px;
+        }
+
+        .symbol {
+            font-weight: bold;
+        }
+
+        .company {
+            color: #818899;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .up {
+            color: #0a9a64;
+            font-weight: bold;
+        }
+
+        .down {
+            color: #dc4055;
+            font-weight: bold;
+        }
+
+        .footer {
+            padding: 15px 18px;
+            color: #737b8c;
+            font-size: 13px;
+        }
+
+        @media (max-width: 650px) {
+            body {
+                padding: 15px;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div id="app" class="container">
+
+    <div class="header">
+        <div>
+            <h1>Live Market Dashboard</h1>
+            <p class="subtitle">
+                Vue 3 shallowRef performance demonstration
+            </p>
+        </div>
+
+        <span class="live">
+            ● {{ running ? "LIVE SIMULATION" : "PAUSED" }}
+        </span>
+    </div>
+
+    <div class="cards">
+        <div class="card">
+            <p>Stocks tracked</p>
+            <h2>{{ stocks.length.toLocaleString() }}</h2>
+        </div>
+
+        <div class="card">
+            <p>Visible stocks</p>
+            <h2>{{ filteredStocks.length }}</h2>
+        </div>
+
+        <div class="card">
+            <p>Last feed update</p>
+            <h2 style="font-size: 20px">{{ lastUpdate }}</h2>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <input
+            v-model="search"
+            placeholder="Search symbol or company..."
+        >
+
+        <button @click="toggleFeed">
+            {{ running ? "Pause feed" : "Resume feed" }}
+        </button>
+    </div>
+
+    <div class="card table-card">
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Stock</th>
+                        <th>Price</th>
+                        <th>Change</th>
+                        <th>Volume</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr
+                        v-for="stock in filteredStocks"
+                        :key="stock.id"
+                    >
+                        <td>
+                            <div class="symbol">{{ stock.symbol }}</div>
+                            <div class="company">{{ stock.company }}</div>
+                        </td>
+
+                        <td>
+                            ₹{{ stock.price.toFixed(2) }}
+                        </td>
+
+                        <td
+                            :class="stock.change >= 0 ? 'up' : 'down'"
+                        >
+                            {{ stock.change >= 0 ? "+" : "" }}
+                            {{ stock.change.toFixed(2) }}%
+                        </td>
+
+                        <td>
+                            {{ stock.volume.toLocaleString() }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            Showing up to 50 matching records from a dataset of
+            {{ stocks.length.toLocaleString() }} stocks.
+            Feed updates every second.
+        </div>
+    </div>
+
+</div>
+
+<script>
+const { createApp, shallowRef, computed, onMounted, onUnmounted } = Vue;
+
+createApp({
+    setup() {
+        const companies = [
+            ["RELIANCE", "Reliance Industries"],
+            ["TCS", "Tata Consultancy Services"],
+            ["INFY", "Infosys"],
+            ["HDFCBANK", "HDFC Bank"],
+            ["ICICIBANK", "ICICI Bank"],
+            ["WIPRO", "Wipro"],
+            ["ITC", "ITC Limited"],
+            ["SBIN", "State Bank of India"],
+            ["BHARTIARTL", "Bharti Airtel"],
+            ["LT", "Larsen & Toubro"]
+        ];
+
+        // Create 10,000 sample stock records.
+        function createStocks() {
+            return Array.from({ length: 10000 }, (_, index) => {
+                const company = companies[index % companies.length];
+
+                return {
+                    id: index + 1,
+                    symbol: index < companies.length
+                        ? company[0]
+                        : company[0] + (Math.floor(index / companies.length) + 1),
+                    company: index < companies.length
+                        ? company[1]
+                        : company[1] + " Series " +
+                          (Math.floor(index / companies.length) + 1),
+                    price: 100 + Math.random() * 2000,
+                    change: (Math.random() - 0.5) * 4,
+                    volume: Math.floor(Math.random() * 1000000)
+                };
+            });
+        }
+
+        // Only the root ref is reactive.
+        const stocks = shallowRef(createStocks());
+
+        const search = shallowRef("");
+        const running = shallowRef(true);
+        const lastUpdate = shallowRef("--");
+
+        let intervalId = null;
+
+        // Search reacts to the query and the replaced stocks array.
+        const filteredStocks = computed(() => {
+            const query = search.value.trim().toLowerCase();
+
+            return stocks.value
+                .filter(stock =>
+                    stock.symbol.toLowerCase().includes(query) ||
+                    stock.company.toLowerCase().includes(query)
+                )
+                .slice(0, 50);
+        });
+
+        // Simulated market feed: create a new array and replace the root.
+        function updateMarket() {
+            const updatedStocks = stocks.value.map(stock => {
+                const movement = (Math.random() - 0.5) * 0.8;
+                const newPrice = Math.max(1, stock.price * (1 + movement / 100));
+
+                return {
+                    ...stock,
+                    price: newPrice,
+                    change: stock.change + movement,
+                    volume: stock.volume + Math.floor(Math.random() * 500)
+                };
+            });
+
+            // This root replacement triggers Vue's update.
+            stocks.value = updatedStocks;
+
+            lastUpdate.value = new Date().toLocaleTimeString();
+        }
+
+        function startFeed() {
+            if (intervalId !== null) return;
+
+            running.value = true;
+            intervalId = setInterval(updateMarket, 1000);
+        }
+
+        function stopFeed() {
+            if (intervalId !== null) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+
+            running.value = false;
+        }
+
+        function toggleFeed() {
+            if (running.value) {
+                stopFeed();
+            } else {
+                startFeed();
+            }
+        }
+
+        onMounted(startFeed);
+        onUnmounted(stopFeed);
+
+        return {
+            stocks,
+            search,
+            running,
+            lastUpdate,
+            filteredStocks,
+            toggleFeed
+        };
+    }
+}).mount("#app");
+</script>
+
+</body>
+</html>

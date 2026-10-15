@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue Dynamic Components POC</title>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f5fa;
+            color: #20283a;
+        }
+
+        .app {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 25px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 18px;
+            border: 1px solid #dce1ec;
+            background: white;
+            color: #35415c;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button.active {
+            background: #4255d4;
+            color: white;
+            border-color: #4255d4;
+        }
+
+        .panel {
+            min-height: 300px;
+            padding: 25px;
+            background: white;
+            border: 1px solid #e7eaf1;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px #00000008;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat {
+            background: #f5f6ff;
+            border-radius: 9px;
+            padding: 20px;
+        }
+
+        .stat p {
+            color: #6b7280;
+            margin: 0 0 10px;
+        }
+
+        .stat strong {
+            font-size: 25px;
+        }
+
+        .field {
+            margin: 20px 0;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .field input {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px;
+            border: 1px solid #dce1ec;
+            border-radius: 7px;
+        }
+
+        .activity {
+            margin-top: 20px;
+            padding: 14px;
+            background: #edf9f2;
+            border-radius: 8px;
+            color: #18734b;
+        }
+
+        @media (max-width: 650px) {
+            .app {
+                margin: 15px auto;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div id="app" class="app">
+
+    <h1>Admin Dashboard</h1>
+
+    <p class="subtitle">
+        Vue 3 dynamic component switching
+    </p>
+
+    <div class="tabs">
+        <button
+            v-for="tab in tabs"
+            :key="tab.name"
+            :class="{ active: activeTab === tab.name }"
+            @click="activeTab = tab.name"
+        >
+            {{ tab.label }}
+        </button>
+    </div>
+
+    <div class="panel">
+
+        <!-- Vue dynamically renders the selected component. -->
+        <component :is="activeComponent"></component>
+
+    </div>
+
+    <p class="activity">
+        Active UI: {{ activeTab }}
+    </p>
+
+</div>
+
+<script>
+const {
+    createApp,
+    ref,
+    computed,
+    defineComponent
+} = Vue;
+
+// Component 1: Overview
+const Overview = defineComponent({
+    template: `
+        <section>
+            <h2>Overview</h2>
+            <p>Welcome to your admin dashboard.</p>
+
+            <div class="stats">
+                <div class="stat">
+                    <p>Total users</p>
+                    <strong>1,250</strong>
+                </div>
+
+                <div class="stat">
+                    <p>Orders</p>
+                    <strong>348</strong>
+                </div>
+
+                <div class="stat">
+                    <p>Revenue</p>
+                    <strong>₹85,000</strong>
+                </div>
+            </div>
+        </section>
+    `
+});
+
+// Component 2: Analytics
+const Analytics = defineComponent({
+    setup() {
+        const visits = ref(5000);
+
+        function addVisits() {
+            visits.value += 100;
+        }
+
+        return {
+            visits,
+            addVisits
+        };
+    },
+
+    template: `
+        <section>
+            <h2>Analytics</h2>
+            <p>Monitor visits to your application.</p>
+
+            <div class="stat">
+                <p>Total visits</p>
+                <strong>{{ visits.toLocaleString() }}</strong>
+            </div>
+
+            <div style="margin-top: 20px">
+                <button @click="addVisits">
+                    Simulate 100 more visits
+                </button>
+            </div>
+        </section>
+    `
+});
+
+// Component 3: Settings
+const Settings = defineComponent({
+    setup() {
+        const username = ref("Vaishu");
+        const email = ref("vaishu@example.com");
+        const savedMessage = ref("");
+
+        function saveSettings() {
+            savedMessage.value =
+                "Settings saved for " + username.value;
+        }
+
+        return {
+            username,
+            email,
+            savedMessage,
+            saveSettings
+        };
+    },
+
+    template: `
+        <section>
+            <h2>Settings</h2>
+            <p>Update your profile information.</p>
+
+            <div class="field">
+                <label>Username</label>
+                <input v-model="username">
+            </div>
+
+            <div class="field">
+                <label>Email</label>
+                <input v-model="email" type="email">
+            </div>
+
+            <button @click="saveSettings">
+                Save settings
+            </button>
+
+            <p v-if="savedMessage" class="activity">
+                {{ savedMessage }}
+            </p>
+        </section>
+    `
+});
+
+createApp({
+    setup() {
+        const activeTab = ref("Overview");
+
+        const tabs = [
+            { name: "Overview", label: "Overview" },
+            { name: "Analytics", label: "Analytics" },
+            { name: "Settings", label: "Settings" }
+        ];
+
+        // Map the selected name to a component definition.
+        const componentMap = {
+            Overview,
+            Analytics,
+            Settings
+        };
+
+        const activeComponent = computed(() => {
+            return componentMap[activeTab.value];
+        });
+
+        return {
+            activeTab,
+            tabs,
+            activeComponent
+        };
+    }
+}).mount("#app");
+</script>
+
+</body>
+</html>

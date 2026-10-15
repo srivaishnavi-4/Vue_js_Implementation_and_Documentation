@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vue Computed & Watchers POC</title>
+
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f6fb;
+      color: #1f2937;
+    }
+
+    .app {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    header {
+      background: #1e3556;
+      color: white;
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      margin-top: 0;
+    }
+
+    header p {
+      line-height: 1.6;
+      color: #dbeafe;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #dbe3ef;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px #00000008;
+    }
+
+    .computed-card {
+      border-top: 5px solid #10b981;
+    }
+
+    .watch-card {
+      border-top: 5px solid #3b82f6;
+    }
+
+    .effect-card {
+      border-top: 5px solid #8b5cf6;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-top: 0;
+    }
+
+    .description,
+    .hint {
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .product-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .quantity {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    button {
+      border: none;
+      background: #dbeafe;
+      color: #1d4ed8;
+      padding: 9px 13px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #bfdbfe;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .total {
+      display: flex;
+      justify-content: space-between;
+      padding: 14px;
+      border-radius: 8px;
+      background: #d1fae5;
+      color: #065f46;
+      font-weight: bold;
+    }
+
+    .discount {
+      color: #059669;
+    }
+
+    .status {
+      font-size: 13px;
+      color: #047857;
+      line-height: 1.5;
+    }
+
+    .warning {
+      color: #b45309;
+    }
+
+    .error {
+      color: #dc2626;
+      font-size: 13px;
+    }
+
+    input {
+      width: 100%;
+      padding: 11px;
+      margin: 8px 0 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #3b82f6;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 0;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 13px;
+    }
+
+    .browser {
+      background: #ede9fe;
+      padding: 14px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    footer {
+      background: #e5efff;
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 22px;
+      line-height: 1.6;
+    }
+
+    footer h2 {
+      margin-top: 0;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app" class="app">
+
+    <header>
+      <h1>Vue.js: Computed & Watchers</h1>
+      <p>
+        Real-time POC demonstrating computed(),
+        watch(), and watchEffect().
+      </p>
+    </header>
+
+    <section class="grid">
+
+      <!-- =================================
+           1. COMPUTED()
+      ================================== -->
+      <article class="card computed-card">
+        <h2>1. Shopping Cart</h2>
+
+        <p class="description">
+          computed() calculates and caches derived values.
+        </p>
+
+        <div class="product-row">
+          <span>Product price</span>
+          <strong>₹{{ productPrice }}</strong>
+        </div>
+
+        <div class="product-row">
+          <span>Quantity</span>
+
+          <div class="quantity">
+            <button
+              @click="decreaseQuantity"
+              :disabled="quantity <= 1"
+            >−</button>
+
+            <strong>{{ quantity }}</strong>
+
+            <button @click="increaseQuantity">+</button>
+          </div>
+        </div>
+
+        <hr />
+
+        <div class="product-row">
+          <span>Subtotal</span>
+          <strong>₹{{ subtotal.toFixed(2) }}</strong>
+        </div>
+
+        <div class="product-row">
+          <span>Discount</span>
+          <strong class="discount">
+            − ₹{{ discount.toFixed(2) }}
+          </strong>
+        </div>
+
+        <div class="total">
+          <span>Final Total</span>
+          <span>₹{{ totalPrice.toFixed(2) }}</span>
+        </div>
+
+        <p v-if="freeShipping" class="status">
+          You qualify for free shipping!
+        </p>
+
+        <p v-else class="status warning">
+          Add more items to qualify for free shipping.
+        </p>
+      </article>
+
+      <!-- =================================
+           2. WATCH()
+      ================================== -->
+      <article class="card watch-card">
+        <h2>2. Product Search</h2>
+
+        <p class="description">
+          watch() observes the search term and fetches products.
+        </p>
+
+        <input
+          v-model="searchTerm"
+          type="text"
+          placeholder="Search laptop, phone..."
+        />
+
+        <p v-if="loading" class="status">
+          Loading products...
+        </p>
+
+        <p v-else-if="errorMessage" class="error">
+          {{ errorMessage }}
+        </p>
+
+        <ul v-else-if="products.length">
+          <li v-for="product in products" :key="product.id">
+            <span>{{ product.title }}</span>
+            <strong>${{ product.price }}</strong>
+          </li>
+        </ul>
+
+        <p
+          v-else-if="searchTerm.trim()"
+          class="status"
+        >
+          No products found.
+        </p>
+
+        <p class="hint">
+          Type in the search box to trigger watch().
+        </p>
+      </article>
+
+      <!-- =================================
+           3. WATCHEFFECT()
+      ================================== -->
+      <article class="card effect-card">
+        <h2>3. User Profile</h2>
+
+        <p class="description">
+          watchEffect() automatically tracks reactive dependencies.
+        </p>
+
+        <label for="firstName">First name</label>
+        <input
+          id="firstName"
+          v-model="firstName"
+          placeholder="Enter first name"
+        />
+
+        <label for="lastName">Last name</label>
+        <input
+          id="lastName"
+          v-model="lastName"
+          placeholder="Enter last name"
+        />
+
+        <div class="browser">
+          <span>Browser tab title</span>
+          <strong>User: {{ fullName }}</strong>
+        </div>
+
+        <p class="hint">
+          Change either name and check the browser tab title.
+        </p>
+      </article>
+
+    </section>
+
+    <footer>
+      <h2>What this POC demonstrates</h2>
+
+      <p>
+        <strong>computed()</strong> — calculates subtotal,
+        discount, final price, and shipping eligibility.
+      </p>
+
+      <p>
+        <strong>watch()</strong> — reacts to search changes
+        and saves cart quantity to localStorage.
+      </p>
+
+      <p>
+        <strong>watchEffect()</strong> — tracks the first and
+        last name and updates the browser tab title.
+      </p>
+    </footer>
+
+  </div>
+
+  <script>
+    const {
+      createApp,
+      ref,
+      computed,
+      watch,
+      watchEffect
+    } = Vue
+
+    createApp({
+      setup() {
+
+        // =================================
+        // 1. REACTIVE STATE
+        // =================================
+
+        const productPrice = ref(500)
+
+        const savedQuantity =
+          Number(localStorage.getItem('cartQuantity'))
+
+        const quantity = ref(
+          Number.isFinite(savedQuantity) && savedQuantity >= 1
+            ? savedQuantity
+            : 1
+        )
+
+        const searchTerm = ref('')
+        const products = ref([])
+        const loading = ref(false)
+        const errorMessage = ref('')
+
+        const firstName = ref('Vaishu')
+        const lastName = ref('Kumar')
+
+        // =================================
+        // 2. COMPUTED()
+        // =================================
+
+        const subtotal = computed(() => {
+          return productPrice.value * quantity.value
+        })
+
+        const discount = computed(() => {
+          return subtotal.value >= 1000
+            ? subtotal.value * 0.10
+            : 0
+        })
+
+        const totalPrice = computed(() => {
+          return subtotal.value - discount.value
+        })
+
+        const freeShipping = computed(() => {
+          return totalPrice.value >= 1000
+        })
+
+        const fullName = computed(() => {
+          return `${firstName.value} ${lastName.value}`.trim()
+        })
+
+        // =================================
+        // 3. WATCH()
+        // =================================
+
+        // Save cart quantity when it changes.
+        watch(quantity, (newQuantity) => {
+          localStorage.setItem(
+            'cartQuantity',
+            String(newQuantity)
+          )
+
+          console.log('Cart quantity saved:', newQuantity)
+        })
+
+        // Fetch products when searchTerm changes.
+        watch(
+          searchTerm,
+          (newTerm, oldTerm, onCleanup) => {
+            console.log(
+              'Search changed:',
+              oldTerm,
+              '->',
+              newTerm
+            )
+
+            const controller = new AbortController()
+
+            const timer = setTimeout(async () => {
+              loading.value = true
+              errorMessage.value = ''
+
+              try {
+                const query = newTerm.trim()
+
+                const url = query
+                  ? `https://dummyjson.com/products/search?q=${encodeURIComponent(query)}`
+                  : 'https://dummyjson.com/products?limit=10'
+
+                const response = await fetch(url, {
+                  signal: controller.signal
+                })
+
+                if (!response.ok) {
+                  throw new Error('Unable to fetch products')
+                }
+
+                const data = await response.json()
+                products.value = data.products
+
+              } catch (error) {
+                if (error.name !== 'AbortError') {
+                  errorMessage.value = error.message
+                  products.value = []
+                }
+              } finally {
+                if (!controller.signal.aborted) {
+                  loading.value = false
+                }
+              }
+            }, 350)
+
+            // Cancel obsolete requests and timers.
+            onCleanup(() => {
+              clearTimeout(timer)
+              controller.abort()
+            })
+          },
+          { immediate: true }
+        )
+
+        // =================================
+        // 4. WATCHEFFECT()
+        // =================================
+
+        watchEffect(() => {
+          document.title = `User: ${fullName.value}`
+
+          console.log(
+            'User name changed:',
+            fullName.value
+          )
+        })
+
+        // =================================
+        // 5. EVENT HANDLERS
+        // =================================
+
+        function increaseQuantity() {
+          quantity.value++
+        }
+
+        function decreaseQuantity() {
+          if (quantity.value > 1) {
+            quantity.value--
+          }
+        }
+
+        return {
+          productPrice,
+          quantity,
+          subtotal,
+          discount,
+          totalPrice,
+          freeShipping,
+          searchTerm,
+          products,
+          loading,
+          errorMessage,
+          firstName,
+          lastName,
+          fullName,
+          increaseQuantity,
+          decreaseQuantity
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
