@@ -1,0 +1,837 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vue 3 Ref and Reactive POC</title>
+
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #263238;
+      padding: 30px 16px;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      max-width: 950px;
+      margin: auto;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .eyebrow {
+      color: #16845d;
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 34px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #697586;
+      line-height: 1.5;
+    }
+
+    .vue-badge,
+    .code-badge {
+      display: inline-block;
+      background: #e0f7ed;
+      color: #187c5c;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card,
+    .panel,
+    .learning-panel {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 22px;
+    }
+
+    .stat-card span {
+      color: #697586;
+      font-size: 14px;
+    }
+
+    .stat-card h2 {
+      font-size: 32px;
+      margin: 12px 0;
+    }
+
+    .stat-card small {
+      color: #8993a2;
+    }
+
+    .panel {
+      margin-bottom: 20px;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .section-heading h2 {
+      font-size: 21px;
+      margin-bottom: 7px;
+    }
+
+    .section-heading p {
+      font-size: 13px;
+      color: #697586;
+      line-height: 1.5;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    input:not([type="checkbox"]),
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid #d8dee8;
+      border-radius: 8px;
+      padding: 12px;
+      background: #ffffff;
+      color: #263238;
+      outline: none;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: #23966e;
+      box-shadow: 0 0 0 2px #d9f5e9;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .primary-button {
+      border: none;
+      border-radius: 8px;
+      background: #23966e;
+      color: #ffffff;
+      padding: 12px 18px;
+      font-weight: bold;
+    }
+
+    .primary-button:hover {
+      background: #187c5c;
+    }
+
+    .message {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #187c5c;
+    }
+
+    .message.error {
+      color: #c0392b;
+    }
+
+    .search-input {
+      margin-bottom: 15px;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .filter-button {
+      border: 1px solid #dce3eb;
+      background: #ffffff;
+      color: #475569;
+      padding: 9px 16px;
+      border-radius: 8px;
+    }
+
+    .filter-button.active {
+      background: #e0f7ed;
+      border-color: #23966e;
+      color: #187c5c;
+      font-weight: bold;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 18px 0;
+      border-top: 1px solid #edf0f4;
+    }
+
+    .task-checkbox {
+      width: 17px;
+      height: 17px;
+      margin-top: 3px;
+      accent-color: #23966e;
+      flex-shrink: 0;
+    }
+
+    .task-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .task-title {
+      font-size: 16px;
+      margin-bottom: 7px;
+      overflow-wrap: anywhere;
+    }
+
+    .task-description {
+      font-size: 13px;
+      color: #697586;
+      margin-bottom: 10px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .completed .task-title {
+      color: #929ba8;
+      text-decoration: line-through;
+    }
+
+    .task-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #697586;
+    }
+
+    .priority {
+      padding: 5px 8px;
+      border-radius: 6px;
+      background: #f1f3f6;
+    }
+
+    .priority.high {
+      background: #fee2e2;
+      color: #b42318;
+    }
+
+    .priority.medium {
+      background: #fff0cc;
+      color: #946200;
+    }
+
+    .priority.low {
+      background: #e0ecff;
+      color: #2456a6;
+    }
+
+    .delete-button {
+      border: none;
+      background: #fff0f0;
+      color: #bd3434;
+      padding: 8px 10px;
+      border-radius: 7px;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .delete-button:hover {
+      background: #ffdede;
+    }
+
+    .empty-state {
+      padding: 25px 0;
+      text-align: center;
+      color: #697586;
+    }
+
+    .learning-panel {
+      background: #eef8f4;
+      border-color: #d2ede1;
+    }
+
+    .learning-panel h2 {
+      margin-bottom: 16px;
+      font-size: 20px;
+    }
+
+    .learning-item {
+      margin-bottom: 14px;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .learning-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .learning-item code {
+      background: #ffffff;
+      border-radius: 4px;
+      padding: 3px 5px;
+      color: #187c5c;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 20px 12px;
+      }
+
+      .header {
+        align-items: flex-start;
+      }
+
+      h1 {
+        font-size: 27px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .stat-card {
+        padding: 16px;
+      }
+
+      .stat-card h2 {
+        margin: 7px 0;
+      }
+
+      .panel,
+      .learning-panel {
+        padding: 16px;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
+
+      .task-item {
+        gap: 8px;
+      }
+
+      .delete-button {
+        padding: 7px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app" class="app">
+
+    <header class="header">
+      <div>
+        <p class="eyebrow">VUE 3 COMPOSITION API</p>
+        <h1>Task Manager</h1>
+        <p class="subtitle">
+          A practical demonstration of ref() and reactive().
+        </p>
+      </div>
+
+      <span class="vue-badge">Vue 3</span>
+    </header>
+
+    <!-- Dashboard: values derived from reactive state -->
+    <section class="stats">
+      <article class="stat-card">
+        <span>Total tasks</span>
+        <h2>{{ tasks.length }}</h2>
+        <small>All tasks</small>
+      </article>
+
+      <article class="stat-card">
+        <span>Active tasks</span>
+        <h2>{{ activeCount }}</h2>
+        <small>Tasks remaining</small>
+      </article>
+
+      <article class="stat-card">
+        <span>Completed tasks</span>
+        <h2>{{ completedCount }}</h2>
+        <small>Tasks finished</small>
+      </article>
+    </section>
+
+    <!-- Form: reactive() -->
+    <section class="panel">
+      <div class="section-heading">
+        <div>
+          <h2>Add a task</h2>
+          <p>Related form properties are grouped in reactive().</p>
+        </div>
+
+        <span class="code-badge">reactive()</span>
+      </div>
+
+      <form @submit.prevent="addTask">
+
+        <div class="form-group">
+          <label for="title">Task title</label>
+
+          <input
+            id="title"
+            v-model="taskForm.title"
+            type="text"
+            placeholder="Example: Learn Vue computed()"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description</label>
+
+          <textarea
+            id="description"
+            v-model="taskForm.description"
+            rows="3"
+            placeholder="Describe your task..."
+          ></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="priority">Priority</label>
+
+            <select id="priority" v-model="taskForm.priority">
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="dueDate">Due date</label>
+
+            <input
+              id="dueDate"
+              v-model="taskForm.dueDate"
+              type="date"
+            />
+          </div>
+        </div>
+
+        <button class="primary-button" type="submit">
+          + Add task
+        </button>
+
+        <p
+          v-if="message"
+          class="message"
+          :class="{ error: messageType === 'error' }"
+          role="status"
+        >
+          {{ message }}
+        </p>
+
+      </form>
+    </section>
+
+    <!-- Search and filters: ref() -->
+    <section class="panel">
+      <div class="section-heading">
+        <div>
+          <h2>Your tasks</h2>
+          <p>Search and filter using ref() values.</p>
+        </div>
+
+        <span class="code-badge">ref()</span>
+      </div>
+
+      <input
+        v-model="searchText"
+        class="search-input"
+        type="search"
+        placeholder="Search tasks by title..."
+        aria-label="Search tasks"
+      />
+
+      <div class="filters">
+        <button
+          v-for="filter in ['All', 'Active', 'Completed']"
+          :key="filter"
+          type="button"
+          class="filter-button"
+          :class="{ active: selectedFilter === filter }"
+          @click="selectedFilter = filter"
+        >
+          {{ filter }}
+        </button>
+      </div>
+
+      <div v-if="filteredTasks.length > 0">
+
+        <article
+          v-for="task in filteredTasks"
+          :key="task.id"
+          class="task-item"
+          :class="{ completed: task.completed }"
+        >
+
+          <input
+            class="task-checkbox"
+            type="checkbox"
+            :checked="task.completed"
+            :aria-label="'Complete ' + task.title"
+            @change="toggleTask(task)"
+          />
+
+          <div class="task-content">
+            <h3 class="task-title">{{ task.title }}</h3>
+
+            <p
+              v-if="task.description"
+              class="task-description"
+            >
+              {{ task.description }}
+            </p>
+
+            <div class="task-meta">
+              <span
+                class="priority"
+                :class="task.priority.toLowerCase()"
+              >
+                {{ task.priority }} priority
+              </span>
+
+              <span v-if="task.dueDate">
+                Due: {{ task.dueDate }}
+              </span>
+
+              <span>
+                {{ task.completed ? 'Completed' : 'Active' }}
+              </span>
+            </div>
+          </div>
+
+          <button
+            class="delete-button"
+            type="button"
+            @click="deleteTask(task.id)"
+          >
+            Delete
+          </button>
+
+        </article>
+
+      </div>
+
+      <p v-else class="empty-state">
+        No tasks found. Try another search or filter.
+      </p>
+    </section>
+
+    <!-- Explanation of implementation -->
+    <section class="learning-panel">
+      <h2>What you are learning</h2>
+
+      <p class="learning-item">
+        <strong>ref():</strong>
+        <code>searchText</code>,
+        <code>selectedFilter</code>,
+        <code>tasks</code> and <code>nextId</code>
+        are refs. In JavaScript, read or update them using
+        <code>.value</code>.
+      </p>
+
+      <p class="learning-item">
+        <strong>reactive():</strong>
+        <code>taskForm</code> groups title, description, priority
+        and due date. Access properties directly, such as
+        <code>taskForm.title</code>.
+      </p>
+
+      <p class="learning-item">
+        <strong>Deep reactivity:</strong>
+        Changing <code>task.completed</code> updates the task
+        display and dashboard counts automatically.
+      </p>
+
+      <p class="learning-item">
+        <strong>computed():</strong>
+        <code>filteredTasks</code>, <code>activeCount</code>
+        and <code>completedCount</code> recalculate when their
+        reactive dependencies change.
+      </p>
+    </section>
+
+  </div>
+
+  <script>
+    const {
+      createApp,
+      ref,
+      reactive,
+      computed
+    } = Vue;
+
+    createApp({
+      setup() {
+
+        // =========================================
+        // 1. REF: Individual reactive values
+        // =========================================
+
+        // Search input value
+        const searchText = ref('');
+
+        // Current task filter
+        const selectedFilter = ref('All');
+
+        // Feedback message
+        const message = ref('');
+
+        // Feedback message type
+        const messageType = ref('');
+
+        // ID for newly created tasks
+        const nextId = ref(4);
+
+
+        // =========================================
+        // 2. REACTIVE: Group related form fields
+        // =========================================
+
+        const taskForm = reactive({
+          title: '',
+          description: '',
+          priority: 'Medium',
+          dueDate: ''
+        });
+
+
+        // =========================================
+        // 3. REF: Array of task objects
+        // =========================================
+
+        const tasks = ref([
+          {
+            id: 1,
+            title: 'Learn Vue ref()',
+            description: 'Understand primitive reactive values.',
+            priority: 'High',
+            dueDate: '2026-10-16',
+            completed: false
+          },
+          {
+            id: 2,
+            title: 'Practice reactive()',
+            description: 'Update grouped form properties.',
+            priority: 'Medium',
+            dueDate: '2026-10-17',
+            completed: false
+          },
+          {
+            id: 3,
+            title: 'Build a Vue POC',
+            description: 'Create an interactive task manager.',
+            priority: 'Low',
+            dueDate: '2026-10-18',
+            completed: true
+          }
+        ]);
+
+
+        // =========================================
+        // 4. COMPUTED: Filter tasks automatically
+        // =========================================
+
+        const filteredTasks = computed(() => {
+          return tasks.value.filter((task) => {
+
+            const search = searchText.value
+              .trim()
+              .toLowerCase();
+
+            const matchesSearch =
+              task.title.toLowerCase().includes(search);
+
+            let matchesFilter = true;
+
+            if (selectedFilter.value === 'Active') {
+              matchesFilter = !task.completed;
+            } else if (selectedFilter.value === 'Completed') {
+              matchesFilter = task.completed;
+            }
+
+            return matchesSearch && matchesFilter;
+          });
+        });
+
+
+        // =========================================
+        // 5. COMPUTED: Dashboard counts
+        // =========================================
+
+        const activeCount = computed(() => {
+          return tasks.value.filter(
+            task => !task.completed
+          ).length;
+        });
+
+        const completedCount = computed(() => {
+          return tasks.value.filter(
+            task => task.completed
+          ).length;
+        });
+
+
+        // =========================================
+        // 6. ADD TASK
+        // =========================================
+
+        function addTask() {
+
+          if (!taskForm.title.trim()) {
+            message.value = 'Please enter a task title.';
+            messageType.value = 'error';
+            return;
+          }
+
+          const newTask = {
+            id: nextId.value,
+            title: taskForm.title.trim(),
+            description: taskForm.description.trim(),
+            priority: taskForm.priority,
+            dueDate: taskForm.dueDate,
+            completed: false
+          };
+
+          nextId.value++;
+
+          // Push into the ref array.
+          // Vue tracks this mutation.
+          tasks.value.push(newTask);
+
+          // Reset properties on the same reactive object.
+          taskForm.title = '';
+          taskForm.description = '';
+          taskForm.priority = 'Medium';
+          taskForm.dueDate = '';
+
+          message.value = 'Task added successfully!';
+          messageType.value = 'success';
+        }
+
+
+        // =========================================
+        // 7. TOGGLE TASK COMPLETION
+        // =========================================
+
+        function toggleTask(task) {
+
+          // task is a reactive object nested inside tasks.value.
+          task.completed = !task.completed;
+
+          message.value = task.completed
+            ? 'Task marked as completed.'
+            : 'Task marked as active.';
+
+          messageType.value = 'success';
+        }
+
+
+        // =========================================
+        // 8. DELETE TASK
+        // =========================================
+
+        function deleteTask(id) {
+
+          tasks.value = tasks.value.filter(
+            task => task.id !== id
+          );
+
+          message.value = 'Task deleted successfully.';
+          messageType.value = 'success';
+        }
+
+
+        // =========================================
+        // 9. EXPOSE VALUES TO THE TEMPLATE
+        // =========================================
+
+        return {
+          searchText,
+          selectedFilter,
+          message,
+          messageType,
+          nextId,
+          taskForm,
+          tasks,
+          filteredTasks,
+          activeCount,
+          completedCount,
+          addTask,
+          toggleTask,
+          deleteTask
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

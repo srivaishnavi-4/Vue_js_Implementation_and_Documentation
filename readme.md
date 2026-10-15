@@ -1060,3 +1060,99 @@ The four component-design concepts serve different purposes:
 - **Props and Emits** establish explicit parent-child communication.
 - **Slots** make reusable components flexible by allowing customizable content.
 - **Provide / Inject** shares dependencies with deeply nested descendants without excessive prop passing.
+
+# ref() vs reactive()
+## 1. Definition
+Vue 3 provides `ref()` and `reactive()` to create reactive state. When reactive data changes, Vue automatically updates the dependent UI.
+## 2. ref()
+**Definition:** `ref()` creates a reactive reference that stores a value. In JavaScript, the value is accessed through `.value`.
+
+**Why it is used:**
+- To store strings, numbers, and booleans.
+- To manage search inputs, loading states, and selected filters.
+- To store objects and arrays when the entire value may need replacement.
+
+**Example:**
+
+```js
+import { ref } from 'vue'
+
+const count = ref(0)
+const username = ref('Vaishu')
+
+count.value++
+
+console.log(count.value) // 1
+```
+
+**Real-time use case:** A counter, search input, login status, or loading indicator.
+
+## 3. reactive()
+
+**Definition:** `reactive()` creates a reactive proxy for a supported JavaScript object. Its properties can be accessed directly without `.value`.
+
+**Why it is used:**
+- To group related properties into one object.
+- To manage forms, user profiles, and application settings.
+- To track changes to nested object properties.
+
+**Example:**
+
+```js
+import { reactive } from 'vue'
+
+const taskForm = reactive({
+  title: '',
+  priority: 'Medium',
+  completed: false
+})
+
+taskForm.title = 'Learn Vue'
+taskForm.priority = 'High'
+```
+
+**Real-time use case:** A task form containing a title, priority, due date, and description.
+
+## 4. Difference Between ref() and reactive()
+
+| Feature | ref() | reactive() |
+|---|---|---|
+| Primitive values | Supported | Not intended for primitives |
+| Objects and arrays | Supported | Supported |
+| JavaScript access | `.value` | Direct property access |
+| Nested reactivity | Yes, for normal object values | Yes |
+| Replace entire value | Assign to `.value` | Reassignment loses the original proxy connection |
+
+## 5. Using Both in One Component
+
+```js
+import { ref, reactive } from 'vue'
+
+// Individual value
+const searchText = ref('')
+
+// Grouped form state
+const taskForm = reactive({
+  title: '',
+  priority: 'Medium'
+})
+
+// Update state
+searchText.value = 'Vue'
+taskForm.title = 'Learn Vue'
+```
+
+Here, `ref()` manages the search text, while `reactive()` manages related form fields.
+
+## 6. Important Points
+
+- Use `ref()` for standalone values and replaceable state.
+- Use `reactive()` for grouped object properties.
+- Both support deep reactivity by default for normal nested objects.
+- Use `.value` when accessing refs in JavaScript.
+- In Vue templates, top-level refs are automatically unwrapped.
+- Avoid destructuring reactive objects directly if you need to preserve reactivity. Use `toRefs()` or `toRef()` when necessary.
+
+## 7. Conclusion
+
+`ref()` and `reactive()` are both used to manage reactive state in Vue 3. Choose `ref()` for individual values and whole-value replacement, and `reactive()` for objects whose properties are updated directly. Both allow Vue to update the UI when tracked state changes.
