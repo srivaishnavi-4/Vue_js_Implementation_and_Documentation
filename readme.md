@@ -4528,3 +4528,1869 @@ Pinia is primarily for client-side application state. It does not replace a back
 5. Do not store secrets or trust client-side state as proof of authorization.
 6. Persist only the state that genuinely needs to survive a refresh, and consider security and data consistency.
 7. In Nuxt, follow the official Pinia integration and SSR guidance.
+
+# Server-Side Rendering (SSR)
+## 1. Theory
+
+When we build a Vue.js application, the browser needs HTML to display the page. Vue can generate and update that HTML in the browser using JavaScript, or a server can generate the initial HTML before sending it to the browser.
+
+These approaches are known as Client-Side Rendering (CSR) and Server-Side Rendering (SSR).
+
+In CSR, the browser downloads the application's JavaScript and uses it to render the page. In SSR, the server executes the rendering process and sends HTML containing the page's initial content to the browser.
+
+Vue supports SSR, and frameworks such as Nuxt.js make it easier to implement SSR, routing, data fetching, SEO metadata, and hybrid rendering.
+
+Example: An e-commerce website can use SSR to display product names and prices in the initial HTML, helping search engines and users receive meaningful page content before the client-side application becomes fully interactive.
+
+## 2. Definition
+
+Server-Side Rendering (SSR) is a rendering technique in which the server executes the application's rendering logic to generate HTML for a requested page and sends that HTML to the browser.
+
+After receiving the HTML, the browser displays the page. In a Vue application, Vue can then hydrate the server-rendered HTML, attaching event handlers and making the page interactive.
+
+SSR is especially useful for pages that need discoverable content, such as product listings, articles, documentation, and public landing pages.
+
+## 3. Why is SSR used?
+
+Consider an online shopping website that displays product information.
+
+With a purely client-rendered page, the initial HTML may contain only a root element, while JavaScript must fetch and render the products afterward.
+
+With SSR, the server can fetch the product data and include the rendered product content in the initial HTML.
+
+SSR can help with:
+
+- SEO: Search engines can receive meaningful page HTML and metadata.
+- Initial content display: Users may see useful content before client-side JavaScript finishes executing.
+- Social sharing: Page-specific metadata can be generated for previews.
+- Performance: It can improve perceived loading performance, depending on the application and deployment.
+- Flexible rendering: Different routes can use SSR, static generation, or client-side rendering where appropriate.
+
+SSR does not automatically guarantee better SEO or faster performance. Results depend on the page, caching, server response time, JavaScript size, and overall implementation.
+
+## 4. CSR vs SSR vs SSG
+
+These are three important rendering approaches.
+
+
+
+Client-Side Rendering (CSR)
+
+The browser runs JavaScript to generate the page content.
+
+Useful for interactive dashboards and internal tools where search visibility is less important.
+
+Server-Side Rendering (SSR)
+
+The server generates HTML for each request, often using request-specific data.
+
+Useful for public product pages, articles, and content that changes frequently.
+Static Site Generation (SSG)
+
+HTML is generated ahead of time, usually during the build, and served as static files.
+
+Useful for blogs, documentation, and content that does not need to be generated separately for every request.
+
+| Feature                         | CSR                                            | SSR                                  | SSG                             |
+| ------------------------------- | ---------------------------------------------- | ------------------------------------ | ------------------------------- |
+| HTML generated                  | In the browser                                 | On the server per request, typically | During build or pre-rendering   |
+| Initial content                 | Depends on client JavaScript and data fetching | Can arrive in the initial HTML       | Available in pre-generated HTML |
+| Server required at request time | Not necessarily                                | Usually                              | Not necessarily                 |
+| Dynamic request-specific data   | Client fetch or API                            | Naturally supported                  | Requires additional strategy    |
+| SEO suitability                 | Can work, but requires care                    | Good when implemented correctly      | Good when implemented correctly |
+
+## 5. What is Nuxt.js?
+
+Nuxt.js is a framework built on Vue.js that provides an application structure and features for building web applications.
+
+Instead of manually configuring routing, server rendering, and other infrastructure, Nuxt provides conventions and built-in tools for these tasks.
+
+Important features include:
+
+- File-based routing.
+- Server-side rendering.
+- Static site generation and pre-rendering.
+- Hybrid rendering strategies.
+- Server API endpoints.
+- Data fetching with `useFetch()` and `useAsyncData()`.
+- SEO metadata management.
+- Vue component and composable support.
+- Integration with Pinia for state management.
+
+For example, creating `app/pages/products.vue` in a Nuxt 4 project automatically defines the `/products` route.
+
+## 6. How SSR works in Vue and Nuxt
+
+1\. Browser sends a request
+
+User opens `/products`
+
+2\. Nuxt server processes the route
+
+Runs server-side rendering and fetches required data
+
+3\. Server sends rendered HTML
+
+The browser can display the initial page content
+
+4\. Vue hydrates the page
+
+Client-side JavaScript attaches interactive behavior to the existing HTML
+
+5\. User interacts with the application
+
+Buttons, forms, and client-side navigation work normally
+
+### What is hydration?
+
+Hydration is the process through which Vue connects client-side application behavior to HTML that has already been rendered on the server.
+
+Suppose the server sends this HTML:
+
+```
+<button>Count: 0</button>
+```
+
+The browser can display the button immediately. When Vue hydrates it, Vue attaches the appropriate event handling so the button can respond to clicks.
+
+The server-rendered HTML and the client application's initial render should be consistent. Mismatches can cause hydration warnings and rendering issues.
+
+## 7. Important SSR concepts
+
+### 7.1 Server rendering
+
+The server executes the rendering logic and produces HTML. In Nuxt, SSR is enabled by default unless the relevant route or application configuration changes the rendering behavior.
+
+### 7.2 Hydration
+
+Vue initializes the client-side application and attaches interactivity to the server-generated HTML.
+
+### 7.3 Data fetching
+
+Nuxt provides `useFetch()` and `useAsyncData()` to retrieve data in a way that integrates with SSR and client-side navigation.
+
+Example:
+
+```vue
+<script setup>
+const { data: products, pending, error } =
+  await useFetch('/api/products')
+</script>
+
+<template>
+  <main>
+    <h1>Products</h1>
+
+    <p v-if="pending">Loading products...</p>
+
+    <p v-else-if="error">Unable to load products.</p>
+
+    <ul v-else>
+      <li v-for="product in products" :key="product.id">
+        {{ product.name }} — ₹{{ product.price }}
+      </li>
+    </ul>
+  </main>
+</template>
+```
+
+When SSR is enabled, Nuxt can fetch this data on the server, render the product list into HTML, and transfer the fetched data to the client for hydration.
+
+### 7.4 SEO metadata
+
+Nuxt provides `useSeoMeta()` for defining page titles and metadata.
+
+```vue
+<script setup>
+useSeoMeta({
+  title: 'Products | Vaishu Store',
+  description: 'Explore our latest products and prices.'
+})
+</script>
+```
+
+This allows pages to provide relevant titles and descriptions rather than using the same metadata everywhere.
+
+### 7.5 Server API routes
+
+Nuxt can provide backend endpoints using files under `server/api/`.
+
+For example:
+
+```js
+// server/api/products.get.js
+
+export default defineEventHandler(() => {
+  return [
+    { id: 1, name: 'Headphones', price: 2500 },
+    { id: 2, name: 'Smart Watch', price: 4000 }
+  ]
+})
+```
+
+This creates a `GET /api/products` endpoint. In a real application, the handler might retrieve data from MongoDB through a database layer or call an external service.
+
+## 8. What is hybrid rendering?
+
+Hybrid rendering means using different rendering strategies for different routes within the same application.
+
+For example, an online store might use:
+
+| Route           | Rendering approach                    | Reason                                  |
+| --------------- | ------------------------------------- | --------------------------------------- |
+| `/products`     | SSR                                   | Product data changes frequently         |
+| `/products/123` | SSR                                   | Current product details and SEO         |
+| `/about`        | SSG or pre-rendering                  | Content changes infrequently            |
+| `/dashboard`    | CSR or client-focused rendering       | Personalized interactive content        |
+| `/checkout`     | SSR or CSR, depending on requirements | Depends on authentication, data, and UX |
+
+Nuxt supports route rules that allow rendering and caching behavior to be configured per route.
+
+Example Nuxt configuration:
+
+```js
+export default defineNuxtConfig({
+  routeRules: {
+    '/': { prerender: true },
+    '/products/**': { swr: 300 },
+    '/dashboard/**': { ssr: false }
+  }
+})
+```
+
+What these rules mean:
+
+- `/` is pre-rendered at build time.
+- `/products/**` uses stale-while-revalidate caching with a 300-second interval where supported by the deployment preset.
+- `/dashboard/**` disables SSR, so that route is rendered on the client.
+
+These are illustrative settings. The actual caching behavior depends on the deployment platform and Nitro preset. Avoid disabling SSR on pages that require server-rendered content for discoverability unless there is a specific reason.
+
+## 9. Real-world use cases
+
+E-commerce website: SSR can render product details, prices, and descriptions. Hybrid rendering can pre-render static pages and cache suitable product routes.
+
+News website or blog: SSR or SSG can deliver article content and metadata in the initial HTML.
+
+Travel booking website: SSR can render search results based on request parameters, while client-side interactions handle filters and selections.
+
+Admin dashboard: Client-side rendering may be suitable for highly interactive, authenticated screens, depending on the application's needs.
+
+Documentation website: SSG is often a good choice because pages are mostly static and benefit from fast delivery.
+
+## 10. Advantages and limitations
+
+### Advantages
+
+- Provides meaningful initial HTML.
+- Can improve SEO and link previews.
+- Supports request-specific page data.
+- Integrates routing, data fetching, and metadata in Nuxt.
+- Allows different routes to use different rendering strategies.
+
+### Limitations
+
+- Server rendering adds deployment and operational complexity.
+- Rendering on every request can increase server workload.
+- Slow server-side data fetching can delay the initial response.
+- Hydration requires compatible server and client output.
+- Browser-only APIs such as `window` and `localStorage` cannot be accessed during server rendering.
+- User-specific state and data must be handled carefully to prevent accidental cross-request data leakage.
+
+SSR does not replace backend security. The server must still authenticate users, authorize access, validate input, and protect sensitive data.
+
+## 11. Vue SSR vs Nuxt.js
+
+| Feature            | Vue with manual SSR                  | Nuxt.js                           |
+| ------------------ | ------------------------------------ | --------------------------------- |
+| SSR implementation | Requires manual setup                | Built-in framework support        |
+| Routing            | Configure separately                 | File-based routing                |
+| Data fetching      | Configure the SSR data flow          | Built-in composables              |
+| SEO metadata       | Configure manually or with libraries | Built-in composables              |
+| Server endpoints   | Build separately                     | Nitro server routes               |
+| Hybrid rendering   | Configure yourself                   | Route rules and rendering options |
+
+You can implement SSR directly with Vue, but Nuxt is usually the more convenient option for a complete Vue application.
+
+## 12. Summary
+Server-Side Rendering generates the initial HTML on the server. Vue then hydrates that HTML to make the page interactive. Nuxt.js provides the framework features that make SSR, data fetching, routing, SEO metadata, and hybrid rendering easier to implement.
+
+# Vite Toolchain
+## 1. Theory
+
+When developing a Vue.js application, writing components is only one part of the development process. We also need tools to start a local development server, process files, resolve imports, manage environment variables, optimize assets, and prepare the application for deployment.
+
+Vite is a frontend build tool that provides a fast development server and a production build pipeline for modern JavaScript applications, including Vue.js applications.
+
+Vite uses native ES modules during development to serve source files efficiently. For production, it bundles and optimizes the application using its build pipeline.
+
+For example, when building a Vue e-commerce application, Vite helps us:
+
+- Run the application locally with hot module replacement.
+- Configure environment variables for API URLs.
+- Create aliases such as `@/components`.
+- Process CSS, JavaScript, and imported assets.
+- Generate optimized production files.
+- Preview the production build locally.
+
+## 2. Definition
+
+Vite Toolchain refers to the development and build tools, configuration, environment settings, and optimization processes used by Vite to develop, transform, and prepare frontend applications for deployment.
+
+A typical Vite toolchain includes:
+
+- Development server.
+- Build pipeline.
+- `vite.config.js` or `vite.config.ts`.
+- Environment variables.
+- Import aliases.
+- Asset processing.
+- CSS handling.
+- Plugins.
+- Production preview and deployment output.
+
+## 3. Why is Vite used?
+
+Consider a Vue project with hundreds of components, CSS files, images, and API integrations.
+
+Without a suitable build tool, developers would need to handle many tasks manually, including serving source files, resolving imports, processing assets, and creating production-ready files.
+
+Vite automates these tasks.
+
+### Main benefits
+
+1. Fast development server: Uses native ES modules to serve source code during development.
+2. Hot Module Replacement (HMR): Updates changed modules without requiring a full page reload in many cases.
+3. Production optimization: Creates bundled and optimized output for deployment.
+4. Environment configuration: Supports different settings for development and production.
+5. Import aliases: Simplifies long relative import paths.
+6. Asset handling: Processes imported images, fonts, CSS, and other supported assets.
+7. Plugin ecosystem: Supports Vue-specific transformations and additional build features.
+
+## 4. Vite architecture and workflow
+
+Developer writes source code
+
+Vue components · JavaScript · CSS · images
+
+Development mode
+
+Vite dev server, module serving and HMR
+
+Production mode
+
+Build, bundle and optimize assets
+
+Application runs or gets deployed
+
+Development server locally, or production files in `dist/`
+
+### Development workflow
+
+When you run `npm run dev`, Vite starts a development server. As you edit a Vue component, Vite detects the change and updates the browser using HMR where possible.
+
+### Production workflow
+
+When you run `npm run build`, Vite processes the application and generates production-ready files in the `dist/` directory by default.
+
+The production files can then be deployed to a static hosting service or served by an appropriate web server.
+
+## 5. Important Vite concepts
+
+### 5.1 Development server
+
+The development server serves your application locally.
+
+Example command:
+
+```
+npm run dev
+```
+
+Typical output:
+
+```
+VITE ready
+
+Local: http://localhost:5173/
+```
+
+The exact port may differ if port `5173` is already occupied or the project configuration changes it.
+
+### 5.2 Hot Module Replacement (HMR)
+
+HMR updates changed modules while the development server is running.
+
+For example, if you change the heading in `App.vue`, Vite can update the page without performing a full browser reload.
+
+Use case: Rapid UI development when building dashboards, shopping carts, and other interactive Vue applications.
+
+### 5.3 Build pipeline
+
+The build pipeline transforms application source files into deployable assets.
+
+```
+npm run build
+```
+
+Typical output structure:
+
+```
+dist/
+├── index.html
+└── assets/
+    ├── index-xxxxxx.js
+    ├── index-xxxxxx.css
+    └── image-xxxxxx.png
+```
+
+The actual filenames and assets depend on your project. Generated asset names often contain hashes to support effective browser caching.
+
+### 5.4 Configuration file
+
+Vite configuration is normally stored in the project root:
+
+- `vite.config.js` for JavaScript configuration.
+- `vite.config.ts` for TypeScript configuration.
+
+The configuration can define aliases, plugins, environment handling, server settings, and build options.
+
+## 6. Configuring the Vite toolchain
+
+### 6.1 Create a Vue project
+
+For a new Vue 3 application, run:
+
+```
+npm create vite@latest vite-toolchain-poc -- --template vue
+cd vite-toolchain-poc
+npm install
+npm run dev
+```
+
+Open the local URL displayed in the terminal.
+
+If the project already exists, you do not need to create another one. Run the commands from your existing project directory.
+
+### 6.2 Configure aliases and build settings
+
+File: `vite.config.js`
+
+Replace the file contents with:
+
+```
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import { fileURLToPath, URL } from 'node:url'
+
+export default defineConfig({
+  plugins: [vue()],
+
+  resolve: {
+    alias: {
+      '@': fileURLToPath(
+        new URL('./src', import.meta.url)
+      )
+    }
+  },
+
+  server: {
+    port: 5173,
+    open: true
+  },
+
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    assetsInlineLimit: 4096
+  }
+})
+```
+
+Explanation:
+
+| Configuration             | Purpose                                      |
+| ------------------------- | -------------------------------------------- |
+| `plugins`                 | Enables Vue single-file component support    |
+| `resolve.alias`           | Maps `@` to the `src/` directory             |
+| `server.port`             | Requests port `5173`                         |
+| `server.open`             | Opens the application in the browser         |
+| `build.outDir`            | Sets the output directory to `dist/`         |
+| `build.sourcemap`         | Disables separate source maps for this build |
+| `build.assetsInlineLimit` | Sets the default inline threshold to 4 KiB   |
+
+With the default asset handling, small imported assets may be inlined as data URLs, while larger assets are generally emitted as separate files. Explicit public-directory assets follow different handling rules.
+
+The source map setting is a deployment choice: source maps are useful for debugging production errors but may expose source information if publicly deployed.
+
+## 7. Environment variables in Vite
+
+### Definition
+
+Environment variables allow configuration values to be provided separately from application source code.
+
+For example, a Vue application may use different API endpoints in development and production.
+
+Development:
+
+```
+http://localhost:5000/api
+```
+
+Production:
+
+```
+https://api.example.com
+```
+
+Instead of hardcoding these URLs throughout the codebase, you can configure them through environment files.
+
+### Create `.env.development`
+
+In the project root, create:
+
+```
+VITE_API_BASE_URL=http://localhost:5000/api
+VITE_APP_NAME=Vaishu Store
+```
+
+### Create `.env.production`
+
+```
+VITE_API_BASE_URL=https://api.example.com
+VITE_APP_NAME=Vaishu Store
+```
+
+### Access the variables
+
+File: `src/config.js`
+
+```
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL
+
+export const APP_NAME =
+  import.meta.env.VITE_APP_NAME
+```
+
+Use these values inside a Vue component:
+
+```
+<script setup>
+import { API_BASE_URL, APP_NAME } from './config.js'
+</script>
+
+<template>
+  <main>
+    <h1>{{ APP_NAME }}</h1>
+    <p>API endpoint: {{ API_BASE_URL }}</p>
+  </main>
+</template>
+```
+
+Vite exposes variables with the `VITE_` prefix through `import.meta.env` by default.
+
+Important security rule: Any `VITE_` variable used in client-side code can become visible to users in the generated frontend bundle. Never put database passwords, private API keys, JWT signing secrets, or other server-only secrets in these variables.
+
+After changing environment files, restart the development server when necessary so Vite reloads the configuration.
+
+## 8. Import aliases
+
+### Problem without aliases
+
+Suppose your project contains this structure:
+
+```
+src/
+├── components/
+│   └── ProductCard.vue
+├── pages/
+│   └── Products.vue
+└── App.vue
+```
+
+Without aliases, a deeply nested component might need an import such as:
+
+```
+import ProductCard from '../../../components/ProductCard.vue'
+```
+
+Long relative paths become difficult to maintain when files move.
+
+### Solution with aliases
+
+Because the Vite configuration maps `@` to `src/`, you can write:
+
+```
+import ProductCard from '@/components/ProductCard.vue'
+```
+
+This makes imports shorter and easier to read.
+
+Where is it useful?
+
+- Large Vue projects.
+- Shared components.
+- Centralized API modules.
+- Utility functions.
+- Store files and application configuration.
+
+If you use TypeScript, configure the corresponding `paths` mapping in your TypeScript configuration as well so that the editor and type checker resolve the same alias.
+
+## 9. Asset optimization
+
+### What are assets?
+
+Assets are files used by the application other than its main source code.
+
+Examples include:
+
+- Images (`.png`, `.jpg`, `.webp`, `.svg`).
+- Fonts (`.woff2`).
+- CSS files.
+- Videos and other media.
+- Icons.
+
+Vite handles imported assets through its build pipeline.
+
+### Imported assets
+
+Example folder structure:
+
+```
+src/
+├── assets/
+│   └── product.png
+└── App.vue
+```
+
+Use the image in a component:
+
+```
+<script setup>
+import productImage from './assets/product.png'
+</script>
+
+<template>
+  <img :src="productImage" alt="Product" />
+</template>
+```
+
+Vite resolves the image and emits an appropriate URL for the production build. Depending on the file size and configuration, the asset may be inlined or emitted separately.
+
+### Public assets
+
+Files inside the project's `public/` directory are served from the root path and copied to the output directory without normal imported-asset hashing.
+
+Example:
+
+```
+public/
+└── logo.svg
+```
+
+Use it as:
+
+```
+<img src="/logo.svg" alt="Logo" />
+```
+
+Choose imported assets for files that benefit from build processing and `public/` for files that need stable paths or should be copied as-is.
+
+### Common optimization practices
+
+1. Prefer appropriately sized, compressed images.
+2. Use modern image formats such as WebP or AVIF where suitable.
+3. Lazy-load images that are below the fold.
+4. Avoid importing unnecessarily large libraries.
+5. Split code when it improves initial loading.
+6. Inspect the production bundle for oversized assets.
+7. Use caching-friendly hashed filenames generated by the build.
+
+Vite optimizes the build pipeline, but it does not automatically make every image visually or perceptually optimal. Image compression, dimensions, and delivery choices still matter.
+
+## 10. Production build and preview
+
+After completing development, run:
+
+```
+npm run build
+```
+
+Vite generates the production output in:
+
+```
+dist/
+```
+
+To test that output locally:
+
+```
+npm run preview
+```
+
+The preview server serves the built files so you can inspect the production version before deployment. It is not intended to replace a production hosting environment.
+
+Typical workflow:
+
+```
+Write code
+   ↓
+npm run dev
+   ↓
+Develop and test
+   ↓
+npm run build
+   ↓
+dist/ generated
+   ↓
+npm run preview
+   ↓
+Deploy dist/ to hosting
+```
+
+## 11. Common Vite commands
+
+| Command                    | Purpose                               |
+| -------------------------- | ------------------------------------- |
+| `npm run dev`              | Starts the development server         |
+| `npm run build`            | Creates a production build            |
+| `npm run preview`          | Previews the production build locally |
+| `npm install`              | Installs project dependencies         |
+| `npm install package-name` | Installs a dependency                 |
+| `npm run`                  | Lists available npm scripts           |
+
+The available scripts are defined in `package.json`.
+
+## 12. Common problems and solutions
+
+Problem: Alias import fails
+
+- Check that `@` maps to the correct source directory.
+- Verify the imported file exists.
+- Restart the development server after changing configuration.
+- For TypeScript, check the `paths` configuration.
+
+Problem: Environment variable is `undefined`
+
+- Ensure the variable uses the `VITE_` prefix.
+- Check the environment file location and mode.
+- Confirm the spelling matches `import.meta.env.VITE_API_BASE_URL`.
+- Restart the server after modifying environment files.
+
+Problem: Port is already in use
+
+- Stop the other process using the port, or configure a different port.
+- Vite may otherwise select another available port unless strict port behavior is enabled.
+
+Problem: Production images are missing
+
+- Check the asset's import path.
+- Verify whether the file belongs in `src/assets/` or `public/`.
+- Test the built output with `npm run preview`.
+- Check base-path configuration if deploying under a subdirectory.
+
+Problem: Production build fails
+
+- Read the first relevant error in the terminal.
+- Check import paths and missing dependencies.
+- Run `npm install` if dependencies have not been installed.
+- Ensure configuration syntax and plugin setup are valid.
+
+## 13. Where is Vite used in real projects?
+
+- Vue applications: Compiling `.vue` files and running a development server.
+- React applications: Serving and building React projects through the relevant plugin.
+- Admin dashboards: Managing code, assets, and build settings.
+- E-commerce applications: Configuring API endpoints and optimizing frontend assets.
+- Progressive Web Apps: Building the application and integrating service-worker tooling.
+- Component libraries: Developing components and generating distributable builds.
+
+Vite is a frontend development and build tool, not a backend framework. It can work alongside Express.js, Node.js APIs, Nuxt, and other backend technologies.
+
+# Testing in Vue.js: Vitest, Vue Test Utils, Cypress and Playwright
+## 1. Theory
+Testing is the process of checking whether an application behaves as expected. In Vue.js, testing helps verify that components render correctly, user interactions work, data updates properly, and complete application workflows function without errors.
+
+Vue applications commonly use three levels of testing:
+
+1. Unit testing — tests a small piece of code in isolation.
+2. Component testing — tests a Vue component, including its rendered output, props, events and interactions.
+3. End-to-end (E2E) testing — tests the complete application through a real browser, from the user's perspective.
+
+## 2. Definition
+
+- Vitest: A testing framework commonly used with Vite projects to execute tests, make assertions and mock dependencies.
+- Vue Test Utils: The official utility library for mounting Vue components and interacting with them in tests.
+- Cypress: A testing framework that runs browser-based tests and supports end-to-end and component testing.
+- Playwright: A browser automation and testing framework that supports Chromium, Firefox and WebKit.
+
+These tools have different responsibilities. Vitest and Vue Test Utils are commonly paired for unit and component tests, while Cypress or Playwright can test complete user workflows.
+
+## 3. Why is testing used?
+Consider an e-commerce application built with Vue.
+Suppose the user clicks Add to Cart. You need to verify that:
+- The product is added to the cart.
+- The cart quantity increases.
+- The total price updates correctly.
+- The cart remains correct when another product is added.
+- The checkout process works from beginning to end.
+
+Without testing, you might discover these bugs only after deploying the application.
+
+With automated testing, you can execute the tests whenever you change your code and detect regressions early.
+
+## 4. Types of testing
+Unit testing
+Tool: Vitest
+Tests an individual function or small unit of logic.
+Example: Verify that a function calculates a cart total of ₹1,500 correctly.
+Component testing
+Tools: Vue Test Utils + Vitest
+Tests a Vue component by mounting it and checking its rendered HTML and interactions.
+Example: Verify that clicking a button changes the quantity displayed by a cart component.
+End-to-end testing
+Tools: Playwright or Cypress
+Tests the application through a browser, including interactions between pages, frontend code and backend services.
+Example: Log in, add a product to the cart, proceed to checkout and verify the order confirmation.
+
+## 5. How the testing workflow works
+
+Vue application
+
+Components, functions, routes and API calls
+
+Vitest + Vue Test Utils
+
+Test individual logic and mounted components.
+
+Playwright / Cypress
+
+Run browser-based user workflows.
+
+Test results
+
+Passed tests, failed assertions and error details
+
+# 6. Vitest and Vue Test Utils — Unit and component testing
+
+## What is Vitest?
+
+Vitest runs JavaScript and TypeScript tests. It integrates naturally with Vite and supports assertions, mocks, spies and code coverage.
+
+For example, if you have this function:
+
+```
+export function calculateTotal(price, quantity) {
+  return price * quantity
+}
+```
+
+You can test whether the function returns the correct result for different inputs without launching a browser.
+
+## What is Vue Test Utils?
+
+Vue Test Utils lets you mount a Vue component in a test environment. You can inspect the rendered content, pass props, trigger events and verify the resulting behavior.
+
+For example, a component might display:
+
+```
+Product: Laptop
+Price: ₹50,000
+Quantity: 1
+[ Add to Cart ]
+```
+
+A component test can verify that the product name appears and that clicking Add to Cart emits the expected event.
+
+## 7. Practical POC: Vue counter application
+
+We will create a small Vue application and test it with Vitest and Vue Test Utils.
+
+### Step 1: Create the project
+
+Run these commands in Windows CMD:
+
+```
+cd /d D:\Vuejs
+npm create vite@latest vue-testing-poc -- --template vue
+cd vue-testing-poc
+npm install
+npm install -D vitest @vue/test-utils jsdom
+```
+
+### Step 2: Configure Vitest
+
+Replace `vite.config.js` with:
+
+File: `D:\Vuejs\vue-testing-poc\vite.config.js`
+
+```
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+export default defineConfig({
+  plugins: [vue()],
+
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    include: ['src/**/*.test.js']
+  }
+})
+```
+
+`jsdom` provides a simulated DOM environment so Vue components can be mounted and tested without opening a real browser.
+
+### Step 3: Update package.json scripts
+
+Keep the dependencies created by npm and add these scripts under `"scripts"`:
+
+```
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:run": "vitest run"
+  }
+}
+```
+
+Do not replace your entire `package.json` with this fragment; preserve the existing dependencies and other fields.
+
+### Step 4: Create the Vue component
+
+File: `src/components/Counter.vue`
+
+```
+<script setup>
+import { ref } from 'vue'
+
+const count = ref(0)
+
+function increment() {
+  count.value++
+}
+
+function decrement() {
+  if (count.value > 0) {
+    count.value--
+  }
+}
+</script>
+
+<template>
+  <div>
+    <h1>Vue Counter</h1>
+
+    <p data-testid="count">Count: {{ count }}</p>
+
+    <button data-testid="increment" @click="increment">
+      Increment
+    </button>
+
+    <button data-testid="decrement" @click="decrement">
+      Decrement
+    </button>
+  </div>
+</template>
+```
+
+What does this component do?
+
+- `ref(0)` initializes the counter to zero.
+- `increment()` increases the count by one.
+- `decrement()` decreases the count only when it is greater than zero.
+- `data-testid` provides stable selectors for automated tests.
+
+### Step 5: Display the component
+
+Replace `src/App.vue` with:
+
+```
+<script setup>
+import Counter from './components/Counter.vue'
+</script>
+
+<template>
+  <main>
+    <Counter />
+  </main>
+</template>
+```
+
+### Step 6: Write the unit and component tests
+
+Create this file:
+
+File: `src/components/Counter.test.js`
+
+```
+import { describe, it, expect } from 'vitest'
+import { mount } from '@vue/test-utils'
+import Counter from './Counter.vue'
+
+describe('Counter component', () => {
+  it('displays an initial count of zero', () => {
+    const wrapper = mount(Counter)
+
+    expect(wrapper.get('[data-testid="count"]').text())
+      .toBe('Count: 0')
+  })
+
+  it('increments the count when the button is clicked', async () => {
+    const wrapper = mount(Counter)
+
+    await wrapper.get('[data-testid="increment"]').trigger('click')
+
+    expect(wrapper.get('[data-testid="count"]').text())
+      .toBe('Count: 1')
+  })
+
+  it('decrements the count when the button is clicked', async () => {
+    const wrapper = mount(Counter)
+
+    await wrapper.get('[data-testid="increment"]').trigger('click')
+    await wrapper.get('[data-testid="decrement"]').trigger('click')
+
+    expect(wrapper.get('[data-testid="count"]').text())
+      .toBe('Count: 0')
+  })
+
+  it('does not allow the count to become negative', async () => {
+    const wrapper = mount(Counter)
+
+    await wrapper.get('[data-testid="decrement"]').trigger('click')
+
+    expect(wrapper.get('[data-testid="count"]').text())
+      .toBe('Count: 0')
+  })
+})
+```
+
+### Step 7: Run the tests
+
+```
+npm run test:run
+```
+
+Expected result:
+
+```
+✓ Counter component
+  ✓ displays an initial count of zero
+  ✓ increments the count when the button is clicked
+  ✓ decrements the count when the button is clicked
+  ✓ does not allow the count to become negative
+
+Test Files  1 passed (1)
+Tests       4 passed (4)
+```
+
+The exact formatting and execution time may vary by Vitest version.
+
+What did we test?
+
+| Test               | Expected behavior            |
+| ------------------ | ---------------------------- |
+| Initial state      | Count is `0`                 |
+| Increment          | Count becomes `1`            |
+| Decrement          | Count returns to `0`         |
+| Boundary condition | Count never becomes negative |
+
+This example is primarily a component test because it mounts a Vue component. A pure function test would be a unit test of the calculation or business logic in isolation.
+
+# 8. Playwright — End-to-end testing
+
+## What is Playwright?
+
+Playwright automates a real browser to test complete application workflows. Unlike a unit test, it can navigate to a running application, click buttons, fill forms and verify what a user sees.
+
+For our counter POC, Playwright can open the application and check whether the count changes after a click.
+
+### Step 1: Install Playwright
+
+From the project directory:
+
+```
+npm install -D @playwright/test
+npx playwright install
+```
+
+### Step 2: Create the Playwright configuration
+
+File: `playwright.config.js`
+
+```
+import { defineConfig, devices } from '@playwright/test'
+
+export default defineConfig({
+  testDir: './e2e',
+
+  use: {
+    baseURL: 'http://127.0.0.1:5173',
+    ...devices['Desktop Chrome']
+  },
+
+  webServer: {
+    command: 'npm run dev -- --host 127.0.0.1',
+    url: 'http://127.0.0.1:5173',
+    reuseExistingServer: !process.env.CI
+  }
+})
+```
+
+The `webServer` setting starts the Vite development server when Playwright runs and waits for it to become available.
+
+### Step 3: Write an E2E test
+
+Create the `e2e` folder and add this file:
+
+File: `e2e/counter.spec.js`
+
+```
+import { test, expect } from '@playwright/test'
+
+test('user can increment and decrement the counter', async ({ page }) => {
+  await page.goto('/')
+
+  await expect(page.getByTestId('count')).toHaveText('Count: 0')
+
+  await page.getByTestId('increment').click()
+
+  await expect(page.getByTestId('count')).toHaveText('Count: 1')
+
+  await page.getByTestId('decrement').click()
+
+  await expect(page.getByTestId('count')).toHaveText('Count: 0')
+})
+```
+
+### Step 4: Add a test command
+
+Add this script to the existing `package.json`:
+
+```
+"test:e2e": "playwright test"
+```
+
+### Step 5: Run the E2E test
+
+```
+npm run test:e2e
+```
+
+Expected result:
+
+```
+Running 1 test using 1 worker
+
+  ✓ e2e/counter.spec.js
+
+  1 passed
+```
+
+Playwright launches the browser, opens the application, clicks the buttons and checks the displayed count. Its output can vary depending on the installed version and browser configuration.
+
+# 9. What about Cypress?
+Cypress is another option for browser-based application testing. It has an interactive test runner that is useful for inspecting commands and debugging test failures.
+
+To add Cypress to the same Vue project:
+
+```
+npm install -D cypress
+npx cypress open
+```
+
+Choose E2E Testing in the Cypress setup wizard. Cypress can generate its configuration and folder structure.
+
+Example Cypress test:
+
+File: `cypress/e2e/counter.cy.js`
+
+```
+describe('Vue Counter', () => {
+  it('increments and decrements the counter', () => {
+    cy.visit('http://localhost:5173')
+
+    cy.get('[data-testid="count"]')
+      .should('have.text', 'Count: 0')
+
+    cy.get('[data-testid="increment"]').click()
+
+    cy.get('[data-testid="count"]')
+      .should('have.text', 'Count: 1')
+
+    cy.get('[data-testid="decrement"]').click()
+
+    cy.get('[data-testid="count"]')
+      .should('have.text', 'Count: 0')
+  })
+})
+```
+
+Start the Vite server separately using `npm run dev`, then execute the Cypress test in its runner.
+
+You do not need both Cypress and Playwright for every project. Choose one E2E framework unless your project has a specific reason to use both.
+
+## 10. Vitest vs Vue Test Utils vs Cypress vs Playwright
+
+| Feature                           | Vitest                              | Vue Test Utils                                 | Cypress                           | Playwright                         |
+| --------------------------------- | ----------------------------------- | ---------------------------------------------- | --------------------------------- | ---------------------------------- |
+| Main purpose                      | Test runner and assertions          | Mount and interact with Vue components         | Browser and E2E testing           | Browser automation and E2E testing |
+| Runs in a real browser by default | No                                  | No, typically uses a simulated DOM with Vitest | Yes                               | Yes                                |
+| Tests Vue component rendering     | With a DOM setup and Vue Test Utils | Yes                                            | Yes, with component testing setup | Can test through the browser       |
+| Tests complete user workflows     | Not its main purpose                | Not its main purpose                           | Yes                               | Yes                                |
+| Typical use                       | Logic and unit tests                | Component tests                                | UI workflows and E2E              | UI workflows and E2E               |
+
+## 11. Real-world applications
+
+- E-commerce: Test product calculations with Vitest, cart component behavior with Vue Test Utils, and checkout with Playwright or Cypress.
+- Admin dashboard: Test formatting and filtering logic in isolation, then verify dashboard filters in the browser.
+- Authentication system: Test form validation at the component level and verify login, logout and protected routes end-to-end.
+- Chat application: Test message formatting and component updates, then test sending messages and displaying delivery status in a running application.
+
+## 12. Best practices
+
+1. Test expected behavior rather than internal implementation details.
+2. Include normal cases, edge cases and invalid inputs.
+3. Use stable selectors such as `data-testid` when appropriate.
+4. Keep unit and component tests fast so you can run them frequently.
+5. Keep E2E tests focused on important user journeys.
+6. Mock external API calls in isolated tests; use a controlled backend or test environment for E2E tests.
+7. Never rely on production customer data when running automated tests.
+8. Run tests in CI before merging or deploying code.
+
+
+# TypeScript Integration in Vue.js
+
+Topic: Implementing strict type safety for component properties, event payloads, and global state objects.
+
+## 1. Theory
+
+TypeScript integration in Vue.js means using TypeScript to define the types of data that flow through a Vue application. It helps developers identify errors during development instead of discovering them only when the application runs.
+
+In a Vue application, TypeScript is especially useful for:
+
+- Component properties (props): Defining what data a component accepts.
+- Event payloads (emits): Defining what data a component sends to its parent.
+- Global state: Defining the structure of shared data managed by Pinia.
+- API responses: Defining the expected structure of data received from a backend.
+- Functions: Defining parameter types and return types.
+
+For example, suppose you are building a student management application. Each student has an ID, name, email and active status. TypeScript allows you to define this structure once and reuse it across components, stores and functions.
+
+## 2. Definition
+
+TypeScript integration in Vue is the practice of using TypeScript's static type system with Vue components, composables, application state and other application logic to improve type safety, maintainability and developer experience.
+
+Vue supports TypeScript through its Composition API, `<script setup lang="ts">`, typed props and events, and integrations such as Pinia.
+
+## 3. Why do we use TypeScript in Vue?
+
+Consider this JavaScript object:
+
+```
+const student = {
+  id: 101,
+  name: 'Vaishu',
+  email: 'vaishu@example.com',
+  isActive: true
+}
+```
+
+JavaScript does not automatically prevent you from writing:
+
+```
+student.id = 'ABC'
+student.isActive = 'yes'
+```
+
+These assignments change the data to unexpected types.
+
+With TypeScript, you can define the required structure:
+
+```
+interface Student {
+  id: number
+  name: string
+  email: string
+  isActive: boolean
+}
+```
+
+Now TypeScript can detect incorrect assignments during development.
+
+| Without TypeScript                             | With TypeScript                              |
+| ---------------------------------------------- | -------------------------------------------- |
+| Data structures are often implicit             | Data structures can be explicitly defined    |
+| Incorrect types may go unnoticed until runtime | Many type errors are detected before runtime |
+| Component contracts are less explicit          | Props and events can have clear contracts    |
+| Shared state can become inconsistent           | Store state and actions can be type-checked  |
+
+TypeScript does not eliminate all runtime errors. It checks types during development and compilation, but it does not automatically validate external API data at runtime.
+
+## 4. Important concepts
+
+### 4.1 Type annotations
+
+A type annotation specifies the expected type of a variable, parameter or return value.
+
+```
+let studentName: string = 'Vaishu'
+let studentAge: number = 21
+let isActive: boolean = true
+```
+
+If you write `studentAge = 'twenty-one'`, TypeScript reports a type error.
+
+### 4.2 Interfaces
+
+An interface defines the expected structure of an object.
+
+```
+interface Student {
+  id: number
+  name: string
+  email: string
+  isActive: boolean
+}
+```
+
+You can reuse this interface in component props, event payloads and Pinia stores.
+
+### 4.3 Type inference
+
+TypeScript can infer types from initial values.
+
+```
+const studentName = 'Vaishu'
+```
+
+TypeScript infers that `studentName` is a string. You do not need to annotate every variable when the type can be inferred safely.
+
+### 4.4 Strict mode
+
+Strict mode enables additional type-checking rules.
+
+In `tsconfig.json`:
+
+```
+{
+  "compilerOptions": {
+    "strict": true
+  }
+}
+```
+
+A Vue project created with a TypeScript template normally has a TypeScript configuration already. Preserve the rest of your existing configuration when enabling strict mode.
+
+# 5. Type-safe component properties (Props)
+
+## What are props?
+
+Props allow a parent component to pass data to a child component.
+
+For example, a parent student list passes a student's details to a `StudentCard.vue` component.
+
+Without types, the child component's expected data structure may be unclear. With TypeScript, you can define exactly what it accepts.
+
+### Example: StudentCard.vue
+
+```
+<script setup lang="ts">
+interface Student {
+  id: number
+  name: string
+  email: string
+  isActive: boolean
+}
+
+defineProps<{
+  student: Student
+}>()
+</script>
+
+<template>
+  <article>
+    <h2>{{ student.name }}</h2>
+    <p>{{ student.email }}</p>
+    <p>ID: {{ student.id }}</p>
+    <p>Status: {{ student.isActive ? 'Active' : 'Inactive' }}</p>
+  </article>
+</template>
+```
+
+### How it works
+
+- `lang="ts"` enables TypeScript in the component's script.
+- `Student` defines the structure expected by the component.
+- `defineProps` declares a prop named `student`.
+- Vue and TypeScript can check that the parent supplies the required fields with the correct types.
+
+For example, passing `id: "101"` instead of `id: 101` will produce a type error when the component is used in a properly type-checked Vue application.
+
+Where is this useful? Student cards, product cards, employee profiles, dashboard widgets and reusable form components.
+
+# 6. Type-safe events (Emits)
+
+## What are emits?
+
+Emits allow a child component to notify its parent that an event has occurred.
+
+Suppose a student card contains an Edit Student button. When clicked, the child sends the student's ID to the parent.
+
+You can define the event name and payload type with TypeScript.
+
+### Example: StudentCard.vue
+
+```
+<script setup lang="ts">
+interface Student {
+  id: number
+  name: string
+  email: string
+  isActive: boolean
+}
+
+defineProps<{
+  student: Student
+}>()
+
+const emit = defineEmits<{
+  edit: [studentId: number]
+  statusChange: [studentId: number, isActive: boolean]
+}>()
+
+function editStudent() {
+  emit('edit', 101)
+}
+
+function toggleStatus() {
+  emit('statusChange', 101, false)
+}
+</script>
+
+<template>
+  <div>
+    <h2>{{ student.name }}</h2>
+
+    <button @click="editStudent">
+      Edit Student
+    </button>
+
+    <button @click="toggleStatus">
+      Deactivate Student
+    </button>
+  </div>
+</template>
+```
+
+The event definitions specify:
+
+- `edit` must emit a numeric student ID.
+- `statusChange` must emit a numeric ID and a Boolean status.
+
+In this example, the payloads are hardcoded for demonstration. In a real application, use `student.id` and the actual status value.
+
+### Parent component usage
+
+```
+<script setup lang="ts">
+import StudentCard from './StudentCard.vue'
+
+function handleEdit(studentId: number) {
+  console.log('Edit student:', studentId)
+}
+
+function handleStatusChange(
+  studentId: number,
+  isActive: boolean
+) {
+  console.log('Student:', studentId)
+  console.log('Active:', isActive)
+}
+</script>
+
+<template>
+  <StudentCard
+    :student="{
+      id: 101,
+      name: 'Vaishu',
+      email: 'vaishu@example.com',
+      isActive: true
+    }"
+    @edit="handleEdit"
+    @status-change="handleStatusChange"
+  />
+</template>
+```
+
+When the child emits an event, the parent receives the payload and can perform the appropriate action.
+
+Important: TypeScript can validate event payload types during development, but it does not automatically validate arbitrary values received at runtime.
+
+# 7. Type-safe global state using Pinia
+
+## What is global state?
+
+Global state is data that multiple components need to access or update.
+
+For example, in a student management application:
+
+- `StudentList.vue` displays all students.
+- `StudentDashboard.vue` displays the total number of students.
+- `StudentForm.vue` adds a new student.
+
+If all three components need the same student data, maintaining separate copies can lead to inconsistent information.
+
+Pinia provides a centralized store. TypeScript helps define the structure of the state and the parameters accepted by store actions.
+
+### Example: `stores/student.ts`
+
+```
+import { defineStore } from 'pinia'
+
+export interface Student {
+  id: number
+  name: string
+  email: string
+  isActive: boolean
+}
+
+interface StudentState {
+  students: Student[]
+  loading: boolean
+  error: string | null
+}
+
+export const useStudentStore = defineStore('students', {
+  state: (): StudentState => ({
+    students: [],
+    loading: false,
+    error: null
+  }),
+
+  getters: {
+    totalStudents: (state): number => state.students.length,
+
+    activeStudents: (state): Student[] =>
+      state.students.filter(student => student.isActive)
+  },
+
+  actions: {
+    addStudent(student: Student): void {
+      this.students.push(student)
+    },
+
+    removeStudent(studentId: number): void {
+      this.students = this.students.filter(
+        student => student.id !== studentId
+      )
+    },
+
+    setLoading(value: boolean): void {
+      this.loading = value
+    }
+  }
+})
+```
+
+### Explanation
+
+- `Student` defines the structure of one student.
+- `StudentState` defines the structure of the complete store state.
+- `students: Student[]` means the array must contain student objects.
+- `loading: boolean` represents whether data is loading.
+- `error: string | null` allows either an error message or no error.
+- `totalStudents` calculates the number of students.
+- `activeStudents` returns only active students.
+- `addStudent()` accepts a `Student` object.
+- `removeStudent()` accepts a numeric student ID.
+
+For example, this call is valid:
+
+```
+store.addStudent({
+  id: 101,
+  name: 'Vaishu',
+  email: 'vaishu@example.com',
+  isActive: true
+})
+```
+
+But passing a string instead of a number for `id` causes a TypeScript error in a type-checked call.
+
+### Using the store in a component
+
+```
+<script setup lang="ts">
+import { useStudentStore } from '@/stores/student'
+
+const store = useStudentStore()
+</script>
+
+<template>
+  <section>
+    <h2>Student Dashboard</h2>
+
+    <p>Total students: {{ store.totalStudents }}</p>
+
+    <h3>Active Students</h3>
+
+    <ul>
+      <li
+        v-for="student in store.activeStudents"
+        :key="student.id"
+      >
+        {{ student.name }}
+      </li>
+    </ul>
+  </section>
+</template>
+```
+
+The component reads data from the centralized Pinia store. Any component using the same store instance can access the shared state.
+
+# 8. Full architecture and data flow
+
+Parent component
+
+Passes a typed Student object through props
+
+Child component
+
+Displays the student and emits typed events
+
+Pinia store
+
+Maintains typed state, getters and actions
+
+Other components
+
+Read the shared state and display updated information
+
+The important distinction is that props and emits define communication between components, while Pinia manages shared application state. TypeScript adds type checking to all three.
+
+# 9. Practical POC: Student Management with Vue + TypeScript + Pinia
+
+This small POC combines typed props, typed events and typed global state in one application.
+
+## Step 1: Create a Vue TypeScript project
+
+Run these commands in Windows CMD:
+
+```
+cd /d D:\Vuejs
+npm create vite@latest vue-typescript-poc -- --template vue-ts
+cd vue-typescript-poc
+npm install
+npm install pinia
+```
+
+## Step 2: Create the folder structure
+
+```
+vue-typescript-poc/
+├── src/
+│   ├── components/
+│   │   └── StudentCard.vue
+│   ├── stores/
+│   │   └── student.ts
+│   ├── App.vue
+│   └── main.ts
+├── package.json
+├── tsconfig.json
+└── vite.config.ts
+```
+
+## Step 3: Configure Pinia
+
+Replace `src/main.ts` with:
+
+```
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import App from './App.vue'
+
+const app = createApp(App)
+
+app.use(createPinia())
+app.mount('#app')
+```
+
+## Step 4: Create the store
+
+Create `src/stores/student.ts` using the typed Pinia store from Section 7.
+
+## Step 5: Create the component
+
+Create `src/components/StudentCard.vue`:
+
+```
+<script setup lang="ts">
+import type { Student } from '../stores/student'
+
+defineProps<{
+  student: Student
+}>()
+
+const emit = defineEmits<{
+  remove: [studentId: number]
+}>()
+</script>
+
+<template>
+  <article>
+    <h3>{{ student.name }}</h3>
+    <p>{{ student.email }}</p>
+    <p>{{ student.isActive ? 'Active' : 'Inactive' }}</p>
+
+    <button @click="emit('remove', student.id)">
+      Remove Student
+    </button>
+  </article>
+</template>
+```
+
+This component accepts a typed student object and emits a numeric ID when the user clicks Remove Student.
+
+## Step 6: Create the main application
+
+Replace `src/App.vue` with:
+
+```
+<script setup lang="ts">
+import { ref } from 'vue'
+import StudentCard from './components/StudentCard.vue'
+import { useStudentStore } from './stores/student'
+
+const store = useStudentStore()
+
+const name = ref('')
+const email = ref('')
+
+function addStudent() {
+  const trimmedName = name.value.trim()
+  const trimmedEmail = email.value.trim()
+
+  if (!trimmedName || !trimmedEmail) {
+    return
+  }
+
+  const studentId =
+    Math.max(0, ...store.students.map(student => student.id)) + 1
+
+  store.addStudent({
+    id: studentId,
+    name: trimmedName,
+    email: trimmedEmail,
+    isActive: true
+  })
+
+  name.value = ''
+  email.value = ''
+}
+
+function removeStudent(studentId: number) {
+  store.removeStudent(studentId)
+}
+</script>
+
+<template>
+  <main>
+    <h1>Student Management</h1>
+
+    <form @submit.prevent="addStudent">
+      <input
+        v-model="name"
+        placeholder="Student name"
+        aria-label="Student name"
+      />
+
+      <input
+        v-model="email"
+        type="email"
+        placeholder="Student email"
+        aria-label="Student email"
+      />
+
+      <button type="submit">Add Student</button>
+    </form>
+
+    <h2>Total students: {{ store.totalStudents }}</h2>
+
+    <p v-if="store.students.length === 0">
+      No students added yet.
+    </p>
+
+    <StudentCard
+      v-for="student in store.students"
+      :key="student.id"
+      :student="student"
+      @remove="removeStudent"
+    />
+  </main>
+</template>
+```
+
+## Step 7: Run the POC
+
+```
+npm run dev
+```
+
+Open the local URL printed by Vite, normally `http://localhost:5173`.
+
+Expected behavior:
+
+1. The page displays `Total students: 0`.
+2. Enter a name and email, then click Add Student.
+3. The new student appears in the list.
+4. The total student count increases.
+5. Click Remove Student to remove the student.
+6. The list and total count update.
+
+The store keeps data in memory, so refreshing the page resets it. Persistence would require a separate mechanism such as a backend or local storage.
+
+### Step 8: Check TypeScript errors
+
+Run:
+
+```
+npx vue-tsc --noEmit
+```
+
+If the project does not already have `vue-tsc` installed, run:
+
+```
+npm install -D vue-tsc
+```
+
+This checks Vue single-file components and TypeScript types without generating build output. Correct any reported errors before deployment.
+
+# 10. Best practices
+
+1. Use `<script setup lang="ts">` in Vue components that use TypeScript.
+2. Define reusable interfaces or types for shared data structures.
+3. Type component props and emitted event payloads.
+4. Give Pinia state, getters and actions clear types.
+5. Keep strict mode enabled where practical.
+6. Avoid `any` when a specific type or `unknown` would be safer.
+7. Validate API responses at runtime when data comes from an external or untrusted source.
+8. Run `vue-tsc --noEmit` as part of your validation or CI workflow.
+9. Use `import type` when importing types only.
+10. Remember that TypeScript types are erased at runtime; they do not validate incoming JSON automatically.
+
+## 11. Where is TypeScript integration useful?
+
+| Application        | Example                                                    |
+| ------------------ | ---------------------------------------------------------- |
+| E-commerce         | Typed products, cart items, prices and checkout events     |
+| Student management | Typed student records, forms and dashboard state           |
+| Chat application   | Typed messages, sender IDs, timestamps and socket payloads |
+| Admin dashboard    | Typed API responses, filters and permissions               |
+| Authentication     | Typed user objects, roles and login form payloads          |
+
