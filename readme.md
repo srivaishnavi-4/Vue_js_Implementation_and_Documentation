@@ -3667,3 +3667,864 @@ Use manual loading state when it provides the simplest solution for the API work
 | User profile        | Load profile information during asynchronous setup.               |
 | Admin application   | Load a complex settings component on demand.                      |
 | Large application   | Coordinate several async components behind one loading interface. |
+
+
+# Vue Router — Complete Notes with Real-Time Examples
+
+## 1. Definition
+
+Vue Router is the official routing library for Vue.js. It allows a Vue application to display different pages or views based on the URL without reloading the entire webpage.
+
+For example, an e-commerce application might have a home page, product listing page, product details page, shopping cart, and user profile. Vue Router connects each URL to the appropriate Vue component.
+
+Vue Router is commonly used in Single Page Applications (SPAs), where the application loads once and dynamically changes its displayed content as the user navigates.
+
+## 2. Why do we use Vue Router?
+
+Imagine building an e-commerce application with these URLs:
+
+| URL             | Page displayed         |
+| --------------- | ---------------------- |
+| `/`             | Home page              |
+| `/products`     | Product listing        |
+| `/products/101` | Details of product 101 |
+| `/cart`         | Shopping cart          |
+| `/profile`      | User profile           |
+
+Without a routing solution, you would need to manage URL changes and determine which component to display manually.
+
+Vue Router provides a standard way to map URLs to components, navigate between pages, handle dynamic parameters, and protect routes that require authentication.
+
+## 3. How Vue Router works
+
+User navigates to a URL
+
+Example: `/products/101`
+
+Vue Router matches the route
+
+Finds the route pattern `/products/:id`
+
+Loads the matching component
+
+Displays the ProductDetails component
+
+`<RouterView />`
+
+Renders the matched page inside the application
+
+The URL changes, Vue Router finds the matching route, and the corresponding component appears in the router view. In a typical SPA navigation, the entire document does not reload.
+
+## 4. Installation
+
+Inside an existing Vue project, run:
+
+```
+npm install vue-router
+```
+
+For a Vue 3 application, Vue Router 4 is the standard version.
+
+A simple project structure could look like this:
+
+```
+src/
+├── components/
+├── views/
+│   ├── HomeView.vue
+│   ├── ProductsView.vue
+│   └── ProductDetailsView.vue
+├── router/
+│   └── index.ts
+├── App.vue
+└── main.ts
+```
+
+- `views/` contains page-level components.
+- `router/index.ts` defines URL-to-component mappings.
+- `main.ts` registers the router with Vue.
+- `App.vue` contains the shared application layout and the router outlet.
+
+## 5. Important Vue Router concepts
+
+### A. Router configuration
+
+The router configuration defines the available routes in an application. Each route usually specifies a URL path and the component that should be displayed.
+
+Real-time example: A shopping application maps `/products` to the product listing view and `/cart` to the cart view.
+
+### B. `RouterView`
+
+`RouterView` is the component that displays the Vue component matching the current route.
+
+Real-time example: When a user navigates from the product listing to the cart, the content inside `RouterView` changes from the product listing to the cart component.
+
+### C. `RouterLink`
+
+`RouterLink` creates navigation links that work with Vue Router.
+
+Real-time example: A navigation bar contains links for Home, Products, Cart, and Profile. Clicking a link navigates to the corresponding route without requiring a full page reload.
+
+### D. Dynamic routes
+
+Dynamic routes contain parameters that change based on the selected resource.
+
+For example, `/products/101` and `/products/102` can both match the route pattern `/products/:id`.
+
+Real-time example: Clicking a particular product opens its details page. The product ID is read from the URL so the application can load the correct product.
+
+### E. Programmatic navigation
+
+Programmatic navigation allows application logic to navigate to another route without the user clicking a link.
+
+Real-time example: After a successful login, the application navigates the user to the dashboard.
+
+### F. Nested routes
+
+Nested routes allow related pages to appear inside a parent page or shared layout.
+
+Real-time example: A user dashboard has a shared sidebar and sections such as Profile, Orders, and Settings. The sidebar remains visible while the selected section changes.
+
+### G. Navigation guards
+
+Navigation guards allow the application to check conditions before entering or leaving a route.
+
+Real-time example: A dashboard route checks whether the user is authenticated. If the user is not logged in, the router redirects them to the login page.
+
+Client-side navigation guards improve navigation behavior, but they do not replace backend authorization. The server must independently protect private data and operations.
+
+### H. Route parameters and query parameters
+
+These are two different ways to pass information through a URL.
+
+- Route parameter: `/products/101` — identifies a particular product.
+- Query parameter: `/products?category=electronics` — filters the product listing by category.
+
+Real-time example: An online store uses the product ID to identify a product and query parameters to filter, sort, or paginate product results.
+
+## 6. Practical example: Vue Router in a Vue 3 application
+16
+This small example connects three pages: Home, Products, and About.
+
+### Step 1: Create the page components
+
+`src/views/HomeView.vue`
+
+```
+<template>
+  <h1>Home Page</h1>
+  <p>Welcome to our shopping application.</p>
+</template>
+```
+
+`src/views/ProductsView.vue`
+
+```
+<template>
+  <h1>Products Page</h1>
+  <p>Browse all available products.</p>
+</template>
+```
+
+`src/views/AboutView.vue`
+
+```
+<template>
+  <h1>About Page</h1>
+  <p>Learn more about our application.</p>
+</template>
+```
+
+### Step 2: Configure the router
+
+`src/router/index.ts`
+
+```
+import { createRouter, createWebHistory } from 'vue-router'
+
+import HomeView from '../views/HomeView.vue'
+import ProductsView from '../views/ProductsView.vue'
+import AboutView from '../views/AboutView.vue'
+
+const routes = [
+  {
+    path: '/',
+    component: HomeView
+  },
+  {
+    path: '/products',
+    component: ProductsView
+  },
+  {
+    path: '/about',
+    component: AboutView
+  }
+]
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes
+})
+
+export default router
+```
+
+### Step 3: Register the router
+
+`src/main.ts`
+
+```
+import { createApp } from 'vue'
+import App from './App.vue'
+import router from './router'
+
+createApp(App)
+  .use(router)
+  .mount('#app')
+```
+
+The `.use(router)` call registers Vue Router with the Vue application so that route matching and navigation become available.
+
+### Step 4: Display navigation and the current page
+
+`src/App.vue`
+
+```
+<template>
+  <nav>
+    <RouterLink to="/">Home</RouterLink> |
+    <RouterLink to="/products">Products</RouterLink> |
+    <RouterLink to="/about">About</RouterLink>
+  </nav>
+
+  <main>
+    <RouterView />
+  </main>
+</template>
+```
+
+### Step 5: Run the application
+
+```
+npm run dev
+```
+
+Open the local URL shown in the terminal, usually `http://localhost:5173`.
+
+Try these URLs:
+
+- `/` displays Home Page.
+- `/products` displays Products Page.
+- `/about` displays About Page.
+
+The navigation links change the displayed view through Vue Router.
+
+## 7. Additional concepts to learn
+
+After understanding the basic router, study these topics in order:
+
+1. `createRouter()` and `createWebHistory()`
+2. `RouterLink` and `RouterView`
+3. Dynamic route matching and route parameters
+4. Programmatic navigation with `router.push()` and `router.replace()`
+5. Query parameters
+6. Nested routes and shared layouts
+7. Navigation guards and authentication
+8. Lazy loading routes for better initial loading performance
+9. Catch-all routes for handling unknown URLs
+10. Route metadata and TypeScript support
+
+# Vue Router Navigation Guards
+
+## 1. Definition
+
+Navigation Guards in Vue Router are functions that control whether a user can navigate to a particular route, remain on a route, or be redirected to another route.
+
+They are commonly used for authentication checks, authorization, form-exit warnings, and other navigation rules.
+
+For example, in an e-commerce application, a user can browse products without logging in, but accessing the account dashboard may require authentication.
+
+## 2. Types of Navigation Guards
+
+Vue Router supports three main categories of navigation guards.
+
+| Type                | Where it is defined            | When to use it                                          |
+| ------------------- | ------------------------------ | ------------------------------------------------------- |
+| Global guards       | Router configuration           | Apply checks across the application                     |
+| Per-route guards    | Individual route configuration | Protect a specific route                                |
+| In-component guards | Inside a Vue component         | Control navigation when entering or leaving a component |
+
+## 3. Global navigation guards
+
+### Definition
+
+Global guards apply to navigation throughout the application. They are registered on the router instance and can inspect the destination and current route before navigation completes.
+
+The main global guards are:
+
+- `beforeEach()` — runs before navigation is confirmed.
+- `beforeResolve()` — runs after in-route guards and async route components have resolved, just before navigation is confirmed.
+- `afterEach()` — runs after navigation completes; it cannot prevent navigation.
+
+### Real-time example: Protecting a dashboard
+
+Imagine a shopping application with public product pages and a private dashboard.
+
+When a user tries to open `/dashboard`, a global guard checks whether the user is logged in. If not, the router redirects them to `/login`.
+
+```
+router.beforeEach((to) => {
+  const isLoggedIn =
+    sessionStorage.getItem('isLoggedIn') === 'true'
+
+  if (to.meta.requiresAuth && !isLoggedIn) {
+    return '/login'
+  }
+})
+```
+
+Here, `to` represents the destination route. The guard checks the route's `requiresAuth` metadata and redirects unauthenticated users.
+
+Use case: When a common navigation rule should apply across many routes.
+
+## 4. Per-route navigation guards
+
+### Definition
+
+Per-route guards are configured directly on individual route definitions. They allow developers to apply a navigation check to a particular route without applying that same check globally.
+
+The main per-route guard is `beforeEnter()`.
+
+### Real-time example: Admin-only page
+
+Imagine an application where only administrators should access the admin settings page.
+
+```
+{
+  path: '/admin',
+  component: AdminView,
+  beforeEnter: () => {
+    const role = sessionStorage.getItem('role')
+
+    if (role !== 'admin') {
+      return '/login'
+    }
+  }
+}
+```
+
+The guard checks the stored role before allowing entry. In this example, it redirects users who are not marked as administrators.
+
+Use case: When a specific route needs a special navigation rule.
+
+Important: this example demonstrates routing behavior only. Client-side role values can be manipulated, so the backend must independently enforce administrator permissions.
+
+## 5. In-component navigation guards
+
+### Definition
+
+In-component guards are defined inside Vue components and allow navigation decisions to depend on the component's own behavior or state.
+
+The main guards are:
+
+- `onBeforeRouteEnter()` — a Vue Router composition API guard for checking navigation into a route from within a component.
+- `onBeforeRouteUpdate()` — runs when the current route is reused but its route parameters change.
+- `onBeforeRouteLeave()` — runs when the user attempts to leave the current route.
+
+For Composition API projects, `onBeforeRouteEnter` is not a Vue lifecycle hook in the same sense as the other two; it is a router navigation guard.
+
+### Real-time example: Unsaved form changes
+
+Imagine a user editing their profile. They change their name but have not saved the form. If they navigate away, their changes could be lost.
+
+```
+<script setup lang="ts">
+import { ref } from 'vue'
+import { onBeforeRouteLeave } from 'vue-router'
+
+const isDirty = ref(true)
+
+onBeforeRouteLeave(() => {
+  if (isDirty.value) {
+    return window.confirm(
+      'You have unsaved changes. Leave this page?'
+    )
+  }
+})
+</script>
+
+<template>
+  <h1>Edit Profile</h1>
+  <p>Update your profile information.</p>
+</template>
+```
+
+If the user confirms, navigation proceeds. If the user cancels, navigation is prevented.
+
+Use case: When navigation depends on the current component's state, such as unsaved form data.
+
+## 6. How navigation guards work
+
+User requests a route
+
+Example: `/dashboard`
+
+Navigation guard checks conditions
+
+Is the user authenticated?
+
+Authenticated
+
+Continue to dashboard
+
+Not authenticated
+
+Redirect to login
+
+A guard can allow navigation by returning nothing or `true`, prevent navigation by returning `false`, or redirect by returning a route location.
+
+## 7. Quick comparison
+
+| Feature         | Global                           | Per-route               | In-component                 |
+| --------------- | -------------------------------- | ----------------------- | ---------------------------- |
+| Scope           | Application-wide                 | Specific route          | Component-related navigation |
+| Example         | Login check for protected routes | Admin route restriction | Unsaved form warning         |
+| Main API        | `beforeEach()`                   | `beforeEnter()`         | `onBeforeRouteLeave()`       |
+| Best suited for | Shared navigation rules          | Route-specific rules    | Component state and behavior |
+
+Important security note: Vue Router guards improve the user experience and control client-side navigation. They are not a security boundary by themselves. APIs and backend resources must enforce authentication and authorization independently.
+
+# Pinia State Management
+
+## 1. Theory
+
+In a Vue application, different components often need access to the same data. For example, in an e-commerce application, the product list, cart summary, header, and checkout page may all need to know the current cart information.
+
+If each component maintains its own copy of the cart data, the values can become inconsistent. When one component updates the cart, the others might not reflect the change.
+
+Pinia solves this problem by providing centralized, reactive state management for Vue applications.
+
+Pinia allows us to store shared data in a central location called a store. Components can read the shared state, access computed values through getters, and modify the state using actions.
+
+Pinia is the recommended state management library for Vue 3 applications.
+
+## 2. Definition
+
+Pinia is a state management library for Vue.js that allows developers to create centralized, reactive stores for managing and sharing application state across multiple components.
+
+A Pinia store can contain:
+
+- State: The data maintained by the store.
+- Getters: Computed values derived from the state.
+- Actions: Functions that perform operations and update the state.
+
+Pinia also supports multiple stores, TypeScript, Vue DevTools integration, and server-side rendering when appropriately configured.
+
+## 3. Why is Pinia used?
+
+Consider an e-commerce application with the following components:
+
+- `ProductList.vue` — displays products.
+- `ProductCard.vue` — adds products to the cart.
+- `CartSummary.vue` — displays cart items and the total price.
+- `Header.vue` — displays the number of cart items.
+- `Checkout.vue` — uses the cart data during checkout.
+
+Without centralized state management, sharing and synchronizing the cart data across these components can require complicated prop passing and event handling.
+
+With Pinia, all these components can access the same cart store.
+
+Pinia Store
+
+State · Getters · Actions
+
+ProductList.vue
+
+ProductCard.vue
+
+CartSummary.vue
+
+Header.vue
+
+Each component reads from and interacts with the same centralized store.
+
+### Benefits of Pinia
+
+1. Centralized state: Shared data is maintained in one place.
+2. Reactivity: Components update when relevant state changes.
+3. Code reuse: Store logic can be reused across components.
+4. Maintainability: Business logic is separated from UI components.
+5. Modular architecture: Different features can have their own stores.
+6. Developer tools: Vue DevTools can help inspect state and actions.
+7. TypeScript support: Pinia provides strong TypeScript integration.
+
+## 4. Important concepts in Pinia
+
+### 4.1 State
+
+Definition: State is the reactive data stored inside a Pinia store.
+
+Example:
+
+```
+state: () => ({
+  username: 'Vaishu',
+  cartItems: [],
+  isLoggedIn: false
+})
+```
+
+Here:
+
+- `username` stores the user's name.
+- `cartItems` stores the products in the cart.
+- `isLoggedIn` tracks the login status.
+
+When the state changes, Vue updates the components that depend on it.
+
+### 4.2 Getters
+
+Definition: Getters are computed properties of a store that derive values from its state or other getters.
+
+Example:
+
+```
+getters: {
+  totalQuantity: (state) =>
+    state.cartItems.reduce(
+      (total, item) => total + item.quantity,
+      0
+    )
+}
+```
+
+Suppose the cart contains:
+
+| Product     | Quantity |
+| ----------- | -------- |
+| Headphones  | 2        |
+| Smart Watch | 1        |
+
+The getter returns `3`.
+
+Why use getters? Instead of calculating the total quantity separately in several components, we define the calculation once and reuse it.
+
+Getters are intended primarily for derived values. They update reactively when their dependencies change.
+
+### 4.3 Actions
+
+Definition: Actions are functions inside a store that contain business logic and can read or modify state.
+
+Example:
+
+```
+actions: {
+  addToCart(product) {
+    const existingItem = this.cartItems.find(
+      (item) => item.id === product.id
+    )
+
+    if (existingItem) {
+      existingItem.quantity++
+    } else {
+      this.cartItems.push({
+        ...product,
+        quantity: 1
+      })
+    }
+  }
+}
+```
+
+This action:
+
+1. Receives a product.
+2. Checks whether the product already exists in the cart.
+3. Increases its quantity if it exists.
+4. Otherwise, adds it as a new cart item.
+
+The keyword `this` refers to the store instance in a regular Pinia Options Store action.
+
+### 4.4 Store
+
+Definition: A store is the central unit that groups related state, getters, and actions.
+
+For example, a large application might contain:
+
+```
+stores/
+├── auth.js
+├── cart.js
+├── products.js
+└── orders.js
+```
+
+Each store handles a different feature. This is easier to maintain than putting all application state and business logic in one large store.
+
+### 4.5 `defineStore()`
+
+`defineStore()` is the Pinia function used to define a store.
+
+```
+export const useCartStore = defineStore('cart', {
+  state: () => ({
+    cartItems: []
+  })
+})
+```
+
+- `'cart'` is the unique store ID.
+- `state` defines the store's data.
+- `useCartStore` is the function used to access the store.
+
+### 4.6 `createPinia()`
+
+`createPinia()` creates a Pinia instance that must be installed into a standard Vue application.
+
+```
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import App from './App.vue'
+
+const app = createApp(App)
+
+app.use(createPinia())
+app.mount('#app')
+```
+
+Once Pinia is installed, components can access the stores.
+
+In a Nuxt application, the official `@pinia/nuxt` module handles the integration, so this manual setup is generally unnecessary.
+
+## 5. How Pinia works
+
+User interaction
+
+Clicks Add to Cart
+
+Action
+
+`addToCart(product)`
+
+State changes
+
+The cart's item quantity increases
+
+Getters recalculate
+
+Total quantity and total price update
+
+Vue UI updates
+
+Cart summary and header show the new values
+
+The key point is that components do not need to manually notify every other component about the change. Vue's reactivity system and Pinia's shared store coordinate the updates.
+
+## 6. Real-time example: E-commerce shopping cart
+
+Imagine a user visits an online store and adds two headphones priced at ₹2,500 each and one smartwatch priced at ₹4,000.
+
+The cart should display:
+
+- Total quantity: `3`
+- Total price: `₹9,000`
+
+If the user adds another smartwatch, the quantity becomes `4` and the total becomes `₹13,000`.
+
+Pinia allows all components to use the same cart data.
+
+### Store implementation
+
+File: `stores/cart.js`
+
+```
+import { defineStore } from 'pinia'
+
+export const useCartStore = defineStore('cart', {
+  state: () => ({
+    items: []
+  }),
+
+  getters: {
+    totalQuantity: (state) =>
+      state.items.reduce(
+        (total, item) => total + item.quantity,
+        0
+      ),
+
+    totalPrice: (state) =>
+      state.items.reduce(
+        (total, item) => total + item.price * item.quantity,
+        0
+      )
+  },
+
+  actions: {
+    addToCart(product) {
+      const existingItem = this.items.find(
+        (item) => item.id === product.id
+      )
+
+      if (existingItem) {
+        existingItem.quantity++
+      } else {
+        this.items.push({
+          ...product,
+          quantity: 1
+        })
+      }
+    },
+
+    removeFromCart(productId) {
+      this.items = this.items.filter(
+        (item) => item.id !== productId
+      )
+    },
+
+    clearCart() {
+      this.items = []
+    }
+  }
+})
+```
+
+### Use the store inside a component
+
+```
+<script setup>
+import { useCartStore } from '../stores/cart'
+
+const cart = useCartStore()
+
+const product = {
+  id: 1,
+  name: 'Headphones',
+  price: 2500
+}
+</script>
+
+<template>
+  <div>
+    <h2>{{ product.name }}</h2>
+
+    <p>Price: ₹{{ product.price }}</p>
+
+    <button @click="cart.addToCart(product)">
+      Add to Cart
+    </button>
+
+    <h3>Cart Quantity: {{ cart.totalQuantity }}</h3>
+    <h3>Total Price: ₹{{ cart.totalPrice }}</h3>
+  </div>
+</template>
+```
+
+When the user clicks Add to Cart, the action updates the shared store. The getter recalculates the quantity and total, and Vue updates the displayed values.
+
+## 7. Options Store vs Setup Store
+
+Pinia supports two common ways to define stores.
+
+| Feature        | Options Store                       | Setup Store                               |
+| -------------- | ----------------------------------- | ----------------------------------------- |
+| Structure      | `state`, `getters`, `actions`       | Composition API functions                 |
+| State          | `state: () => ({ ... })`            | `ref()` or `reactive()`                   |
+| Derived values | `getters`                           | `computed()`                              |
+| Methods        | `actions`                           | Functions                                 |
+| Best for       | Clear, structured store definitions | Composition API patterns and custom logic |
+
+Options Store example:
+
+```
+export const useCounterStore = defineStore('counter', {
+  state: () => ({
+    count: 0
+  }),
+
+  getters: {
+    doubleCount: (state) => state.count * 2
+  },
+
+  actions: {
+    increment() {
+      this.count++
+    }
+  }
+})
+```
+
+Setup Store example:
+
+```
+import { computed, ref } from 'vue'
+import { defineStore } from 'pinia'
+
+export const useCounterStore = defineStore('counter', () => {
+  const count = ref(0)
+
+  const doubleCount = computed(() => count.value * 2)
+
+  function increment() {
+    count.value++
+  }
+
+  return {
+    count,
+    doubleCount,
+    increment
+  }
+})
+```
+
+Both approaches are valid. Use the style that best fits your project; for beginners, the Options Store makes the roles of state, getters, and actions especially clear.
+
+## 8. Pinia vs Props and Emits
+
+| Feature         | Props and Emits                          | Pinia                                    |
+| --------------- | ---------------------------------------- | ---------------------------------------- |
+| Purpose         | Communication between related components | Shared state across multiple components  |
+| Data flow       | Parent passes props; child emits events  | Components access a common store         |
+| Best suited for | Local component relationships            | App-wide or feature-wide state           |
+| Example         | Parent passes a product to a card        | Header and cart summary share cart count |
+
+Pinia does not replace props and emits. Use props and emits for straightforward component communication, and Pinia when state needs to be shared across multiple parts of the application.
+
+## 9. Where is Pinia used in real projects?
+
+- E-commerce: shopping cart, selected products, filters, and checkout state.
+- Authentication: current user, login state, and user preferences.
+- Dashboards: selected date ranges, filters, and shared analytics settings.
+- Chat applications: active conversation, unread counts, and UI state.
+- Task management: shared task lists, filters, and selected projects.
+- Admin panels: selected records, dashboard preferences, and application settings.
+
+Pinia is primarily for client-side application state. It does not replace a backend database, API, authentication service, or server-side authorization.
+
+## 10. Advantages and limitations
+
+### Advantages
+
+- Centralizes shared state.
+- Keeps business logic separate from UI components.
+- Updates dependent UI reactively.
+- Supports multiple modular stores.
+- Works well with Vue DevTools and TypeScript.
+- Integrates with Nuxt for server-side rendering.
+
+### Limitations and considerations
+
+- Adds another concept and dependency to learn.
+- Small applications may not need centralized state management.
+- State is generally in memory unless persistence is implemented.
+- Refreshing the page can reset state unless it is restored from a suitable source.
+- SSR applications must avoid leaking one user's state into another user's request; use the supported per-request store setup and avoid unsafe module-level shared state.
+
+## 11. Best practices
+
+1. Create separate stores for distinct features, such as authentication, cart, and products.
+2. Keep reusable business logic in store actions.
+3. Use getters for derived values instead of repeatedly recalculating them in components.
+4. Avoid duplicating the same state across multiple stores.
+5. Do not store secrets or trust client-side state as proof of authorization.
+6. Persist only the state that genuinely needs to survive a refresh, and consider security and data consistency.
+7. In Nuxt, follow the official Pinia integration and SSR guidance.
