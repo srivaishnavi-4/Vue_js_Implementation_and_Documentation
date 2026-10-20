@@ -6394,3 +6394,4 @@ This checks Vue single-file components and TypeScript types without generating b
 | Admin dashboard    | Typed API responses, filters and permissions               |
 | Authentication     | Typed user objects, roles and login form payloads          |
 
+
